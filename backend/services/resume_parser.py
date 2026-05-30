@@ -1,4 +1,4 @@
-import fitz # PyMuPDF
+from pypdf import PdfReader
 import docx
 
 def extract_text(filepath, ext):
@@ -8,9 +8,11 @@ def extract_text(filepath, ext):
                 return f.read()
         elif ext == 'pdf':
             text = ""
-            doc = fitz.open(filepath)
-            for page in doc:
-                text += page.get_text()
+            reader = PdfReader(filepath)
+            for page in reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
             return text
         elif ext == 'docx':
             doc = docx.Document(filepath)
@@ -19,3 +21,4 @@ def extract_text(filepath, ext):
         print(f"Extraction error ({ext}): {str(e)}")
         raise e
     return ""
+

@@ -111,7 +111,7 @@ def generate_resumes():
         error_msg = str(e)
         app.logger.error(f'Processing failed: {error_msg}', exc_info=True)
         
-        if 'fitz' in str(type(e).__module__) or 'pdf' in error_msg.lower():
+        if 'fitz' in str(type(e).__module__) or 'pypdf' in str(type(e).__module__) or 'pdf' in error_msg.lower():
             return jsonify({'error': 'Invalid or corrupted PDF file. Please upload a valid PDF.'}), 400
         # Check for DOCX-related errors
         if 'docx' in str(type(e).__module__) or 'opc' in str(type(e).__module__):
