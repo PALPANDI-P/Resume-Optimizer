@@ -1,0 +1,10 @@
+Flask==3.0.0
+Flask-CORS==4.0.0
+PyMuPDF>=1.23.5
+python-docx==1.0.1
+fpdf==1.7.2
+flask-sqlalchemy
+flask-bcrypt
+flask-jwt-extended
+psycopg2-binary
+python-dotenv

@@ -1,0 +1,11 @@
+node_modules
+dist
+.DS_Store
+*.log
+.env.local
+.env.*.local
+.env
+backend/.env
+backend/instance/*.db
+__pycache__
+backend/venv
