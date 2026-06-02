@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Search, CheckCircle2, Grid, Sparkles, Filter, X } from 'lucide-react';
-import { TEMPLATES, TEMPLATE_CATEGORIES, PREMIUM_SAMPLE_DATA } from '../constants/templates';
-import { normalizeData } from '../components/ResumeBuilder';
+import { TEMPLATES, TEMPLATE_CATEGORIES } from '../constants/templates';
+import { normalizeData } from '../utils/resumeSerializer';
 import TemplateThumbnail from './TemplateThumbnail';
 
 // ─── PREMIUM TEMPLATE GALLERY ──────────────────────────────────────────────

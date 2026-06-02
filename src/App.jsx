@@ -11,7 +11,8 @@ import AuthModal from './components/AuthModal';
 import DashboardModal from './components/DashboardModal';
 
 // New Workspaces & Views
-import ResumeBuilder, { normalizeData } from './components/ResumeBuilder';
+import ResumeBuilder from './components/ResumeBuilder';
+import { normalizeData } from './utils/resumeSerializer';
 import ResumePreviewPage from './components/ResumePreviewPage';
 import ResumeOptimizer from './components/ResumeOptimizer';
 import TemplateGallery from './components/TemplateGallery';
@@ -33,9 +34,6 @@ function App() {
   });
   const [activeModal, setActiveModal] = useState(null);
 
-  // Load standard and custom templates
-  const [allTemplates, setAllTemplates] = useState([]);
-
   const loadTemplates = () => {
     try {
       const custom = localStorage.getItem('custom_resume_templates');
@@ -47,9 +45,16 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    loadTemplates();
-  }, []);
+  // Load standard and custom templates
+  const [allTemplates, setAllTemplates] = useState(() => {
+    try {
+      const custom = localStorage.getItem('custom_resume_templates');
+      const parsedCustom = custom ? JSON.parse(custom) : [];
+      return [...parsedCustom, ...TEMPLATES.filter(t => !parsedCustom.some(c => c.id === t.id))];
+    } catch {
+      return TEMPLATES;
+    }
+  });
   
   // Active Resume Data
   const [selectedTemplateId, setSelectedTemplateId] = useState(TEMPLATES[0]?.id || '');

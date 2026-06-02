@@ -513,3 +513,49 @@ const parseExperienceOrInternship = (lines) => {
   if (currentItem) items.push(currentItem);
   return items;
 };
+
+export const normalizeData = (raw) => {
+  const defaultVisible = {
+    summary: true,
+    objective: true,
+    experience: true,
+    internships: true,
+    education: true,
+    skills: true,
+    technicalSkills: true,
+    softSkills: true,
+    projects: true,
+    certifications: true,
+    achievements: true,
+    languages: true,
+    publications: true,
+    volunteerExperience: true,
+    references: true,
+    customSections: true,
+    awards: true
+  };
+  return {
+    personal: raw?.personal || { name: '', email: '', phone: '', location: '', website: '', linkedin: '' },
+    summary: raw?.summary || '',
+    objective: raw?.objective || '',
+    experience: raw?.experience || [],
+    internships: raw?.internships || [],
+    education: raw?.education || [],
+    skills: raw?.skills || [],
+    technicalSkills: raw?.technicalSkills || [],
+    softSkills: raw?.softSkills || '',
+    projects: raw?.projects || [],
+    certifications: raw?.certifications || [],
+    achievements: raw?.achievements || [],
+    languages: raw?.languages || [],
+    publications: raw?.publications || [],
+    volunteerExperience: raw?.volunteerExperience || [],
+    references: raw?.references || [],
+    customSections: raw?.customSections || [],
+    awards: raw?.awards || [],
+    visibleSections: raw?.visibleSections || defaultVisible,
+    db_id: raw?.db_id || null,
+    template_id: raw?.template_id || null
+  };
+};
+

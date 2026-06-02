@@ -6,4 +6,6 @@ fpdf2
 flask-sqlalchemy
 flask-bcrypt
 flask-jwt-extended
+psycopg2-binary
 python-dotenv
+google-generativeai

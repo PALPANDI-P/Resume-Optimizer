@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Palette, CheckCircle2, AlertCircle, Copy, Check, 
-  Upload, RefreshCw, Layout, Type, Save, FileCode, CheckCircle, Info
+  Upload, Layout, Save, FileCode, CheckCircle, Info
 } from 'lucide-react';
 import TemplateThumbnail from './TemplateThumbnail';
 
@@ -156,9 +156,6 @@ export default function TemplateImporter({ onTemplateRegistered }) {
   const [dividerStyle, setDividerStyle] = useState('thin-line');
   const [spacingScale, setSpacingScale] = useState(1.0);
 
-  // Raw JSON import
-  const [jsonText, setJsonText] = useState('');
-  
   // States
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -167,7 +164,7 @@ export default function TemplateImporter({ onTemplateRegistered }) {
   // Loaded customized template
   const customTemplateObject = useMemo(() => {
     return {
-      id: 'custom-' + templateName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '') || 'custom-template',
+      id: 'custom-' + templateName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'custom-template',
       name: templateName,
       archetype: layout,
       categories: ['professional', category],
@@ -193,10 +190,13 @@ export default function TemplateImporter({ onTemplateRegistered }) {
     textColor, sidebarBg, dividerStyle, spacingScale
   ]);
 
-  // Sync state to JSON text area when styles change
-  useEffect(() => {
+  const [prevCustomTemplateObject, setPrevCustomTemplateObject] = useState(customTemplateObject);
+  const [jsonText, setJsonText] = useState(() => JSON.stringify(customTemplateObject, null, 2));
+
+  if (customTemplateObject !== prevCustomTemplateObject) {
+    setPrevCustomTemplateObject(customTemplateObject);
     setJsonText(JSON.stringify(customTemplateObject, null, 2));
-  }, [customTemplateObject]);
+  }
 
   // Accessibility & Guideline Validation
   const validations = useMemo(() => {

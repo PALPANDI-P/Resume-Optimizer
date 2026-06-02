@@ -491,7 +491,7 @@ function buildFollowUp(context, resumeText) {
   return pickRandom(openEnded);
 }
 
-function buildGradualReveal(intent, context) {
+function buildGradualReveal(intent, _context) {
   if (intent === 'follow_up' || intent === 'disambiguation') {
     return pickRandom(RESPONSE_VARIANTS.follow_up_intro);
   }
@@ -543,7 +543,7 @@ function getWorkflowResponse(message) {
   return "I can guide you through any part of the platform. What specific feature are you trying to find?";
 }
 
-function buildDefaultResponse(message, lowerMessage, userLevel) {
+function buildDefaultResponse(message, lowerMessage, _userLevel) {
   if (/\b(recommend|should i|good idea|worth|worthwhile|advisable|suggest)\b/i.test(lowerMessage)) {
     return pickRandom([
       "Great question. I'd suggest starting with a self-audit: read your resume out loud, check for quantifiable achievements, and make sure each bullet answers 'So what?' Want me to help you run through one?",
@@ -611,7 +611,7 @@ export function getLocalChatbotResponse(message, _userData = {}) {
   const intent = classifyIntent(query, lowerQuery);
   context.startNewTopic(intent);
   
-  let responseBody = '';
+  let responseBody;
   
   if (intent === 'greeting') {
     if (resumeText && parseResults.name) {

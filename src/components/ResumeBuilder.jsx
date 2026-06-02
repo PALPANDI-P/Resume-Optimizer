@@ -6,69 +6,7 @@ import {
   Eye, FileText, CheckCircle2, PlusCircle, Settings, HelpCircle, Sliders
 } from 'lucide-react';
 import TemplateSelector from './TemplateSelector';
-
-const areEditableFieldsEqual = (a, b) => {
-  if (!a || !b) return false;
-  if (JSON.stringify(a.personal || {}) !== JSON.stringify(b.personal || {})) return false;
-  if ((a.summary || '') !== (b.summary || '')) return false;
-  if ((a.objective || '') !== (b.objective || '')) return false;
-  if ((a.softSkills || '') !== (b.softSkills || '')) return false;
-  const arraysToCompare = [
-    'experience', 'internships', 'education', 'skills', 'technicalSkills',
-    'projects', 'certifications', 'achievements', 'languages', 'publications',
-    'volunteerExperience', 'references', 'customSections', 'awards'
-  ];
-  for (const key of arraysToCompare) {
-    if (JSON.stringify(a[key] || []) !== JSON.stringify(b[key] || [])) return false;
-  }
-  if (JSON.stringify(a.visibleSections || {}) !== JSON.stringify(b.visibleSections || {})) return false;
-  return true;
-};
-
-const normalizeData = (raw) => {
-  const defaultVisible = {
-    summary: true,
-    objective: true,
-    experience: true,
-    internships: true,
-    education: true,
-    skills: true,
-    technicalSkills: true,
-    softSkills: true,
-    projects: true,
-    certifications: true,
-    achievements: true,
-    languages: true,
-    publications: true,
-    volunteerExperience: true,
-    references: true,
-    customSections: true,
-    awards: true
-  };
-  return {
-    personal: raw?.personal || { name: '', email: '', phone: '', location: '', website: '', linkedin: '' },
-    summary: raw?.summary || '',
-    objective: raw?.objective || '',
-    experience: raw?.experience || [],
-    internships: raw?.internships || [],
-    education: raw?.education || [],
-    skills: raw?.skills || [],
-    technicalSkills: raw?.technicalSkills || [],
-    softSkills: raw?.softSkills || '',
-    projects: raw?.projects || [],
-    certifications: raw?.certifications || [],
-    achievements: raw?.achievements || [],
-    languages: raw?.languages || [],
-    publications: raw?.publications || [],
-    volunteerExperience: raw?.volunteerExperience || [],
-    references: raw?.references || [],
-    customSections: raw?.customSections || [],
-    awards: raw?.awards || [],
-    visibleSections: raw?.visibleSections || defaultVisible,
-    db_id: raw?.db_id || null,
-    template_id: raw?.template_id || null
-  };
-};
+import { normalizeData } from '../utils/resumeSerializer';
 
 const allSteps = [
   { id: 'personal', label: 'Personal Info', icon: User },
@@ -1380,5 +1318,3 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
 };
 
 export default ResumeBuilder;
-
-export { normalizeData };

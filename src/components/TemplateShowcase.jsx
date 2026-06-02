@@ -3,12 +3,6 @@ import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { TEMPLATES } from '../constants/templates';
 import TemplateThumbnail from './TemplateThumbnail';
 
-const SHOWCASE_ARCHETYPES = [
-  'ats-optimized', 'modern-sidebar', 'modern-sidebar-right', 'classic-clean',
-  'executive-banner', 'elegant-divider', 'academic-classic', 'creative-timeline',
-  'two-column-balanced', 'two-column-weighted', 'corporate-grid'
-];
-
 const FILTER_PILLS = [
   { id: 'all', label: 'All Styles' },
   { id: 'basic', label: 'Beginner' },

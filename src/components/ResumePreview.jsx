@@ -70,7 +70,6 @@ function ResumePreview({ version, templateId, photoFile, onBack, onTemplateChang
 
   React.useEffect(() => {
     if (photoFile !== prevPhotoFileRef.current) {
-      const prev = prevPhotoFileRef.current;
       prevPhotoFileRef.current = photoFile;
       if (photoUrl) {
         URL.revokeObjectURL(photoUrl);

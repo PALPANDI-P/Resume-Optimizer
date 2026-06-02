@@ -86,7 +86,6 @@ export default function CoverLetterWorkspace({
   // Cover Letter output
   const [letterBody, setLetterBody] = useState('');
   const [prevActiveResumeData, setPrevActiveResumeData] = useState(activeResumeData);
-  const prevActiveResumeDataRef = React.useRef(activeResumeData);
   const [senderName, setSenderName] = useState(() => activeResumeData?.personal?.name || '');
   const [senderContact, setSenderContact] = useState(() => {
     if (activeResumeData?.personal) {
@@ -99,20 +98,19 @@ export default function CoverLetterWorkspace({
     return '';
   });
 
-  React.useEffect(() => {
-    if (activeResumeData !== prevActiveResumeDataRef.current) {
-      prevActiveResumeDataRef.current = activeResumeData;
-      setPrevActiveResumeData(activeResumeData);
-      if (activeResumeData?.personal) {
-        setSenderName(activeResumeData.personal.name || '');
-        const parts = [];
-        if (activeResumeData.personal.email) parts.push(activeResumeData.personal.email);
-        if (activeResumeData.personal.phone) parts.push(activeResumeData.personal.phone);
-        if (activeResumeData.personal.location) parts.push(activeResumeData.personal.location);
-        setSenderContact(parts.join(' | ') || '');
-      }
+  if (activeResumeData !== prevActiveResumeData) {
+    setPrevActiveResumeData(activeResumeData);
+    setSenderName(activeResumeData?.personal?.name || '');
+    if (activeResumeData?.personal) {
+      const parts = [];
+      if (activeResumeData.personal.email) parts.push(activeResumeData.personal.email);
+      if (activeResumeData.personal.phone) parts.push(activeResumeData.personal.phone);
+      if (activeResumeData.personal.location) parts.push(activeResumeData.personal.location);
+      setSenderContact(parts.join(' | ') || '');
+    } else {
+      setSenderContact('');
     }
-  }, [activeResumeData]);
+  }
 
   // Compute extracted resume summary using useMemo to avoid cascading render warnings
   const extractedSummary = useMemo(() => {

@@ -33,14 +33,12 @@ export default function ResumeOptimizer({
   const [checkedItems, setCheckedItems] = useState({});
 
   const [prevActiveResumeText, setPrevActiveResumeText] = useState(activeResumeText);
-  React.useEffect(() => {
-    if (activeResumeText !== prevActiveResumeText) {
-      setPrevActiveResumeText(activeResumeText);
-      if (!activeResumeText && sourceType === 'active') {
-        setSourceType('upload');
-      }
+  if (activeResumeText !== prevActiveResumeText) {
+    setPrevActiveResumeText(activeResumeText);
+    if (!activeResumeText && sourceType === 'active') {
+      setSourceType('upload');
     }
-  }, [activeResumeText, sourceType]);
+  }
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
