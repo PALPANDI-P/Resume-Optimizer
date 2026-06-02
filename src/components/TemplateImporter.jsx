@@ -409,12 +409,14 @@ export default function TemplateImporter({ onTemplateRegistered }) {
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-750 outline-none focus:border-blue-600 cursor-pointer"
                 >
                   <option value="ats">ATS Friendly</option>
-                  <option value="professional">Professional</option>
-                  <option value="technical">Technical</option>
+                  <option value="basic">Basic / Beginner</option>
+                  <option value="expert">Expert / Senior Professional</option>
+                  <option value="it">IT / Technical</option>
+                  <option value="government">Government / Civil Service</option>
+                  <option value="business">Business / Industrial</option>
+                  <option value="professional">Professional General</option>
                   <option value="executive">Executive</option>
-                  <option value="beginner">Beginner</option>
-                  <option value="creative">Creative</option>
-                  <option value="minimal">Minimal</option>
+                  <option value="creative">Creative Modern</option>
                 </select>
               </div>
             </div>

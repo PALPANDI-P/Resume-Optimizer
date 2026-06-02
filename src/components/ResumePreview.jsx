@@ -56,24 +56,28 @@ function parseResumeContent(text) {
 const SIDEBAR_SECTIONS = new Set(['SKILLS','CONTACT','LANGUAGES','CERTIFICATIONS','AWARDS','EDUCATION','INTERESTS','TECHNICAL SKILLS','SOFT SKILLS','CORE COMPETENCIES']);
 
 function ResumePreview({ version, templateId, photoFile, onBack, onTemplateChange: _onTemplateChange, hideBackBtn = false }) {
-  const [prevVersionContent, setPrevVersionContent] = React.useState(version.content);
   const [editedContent, setEditedContent] = React.useState(version.content);
-
-  if (version.content !== prevVersionContent) {
-    setPrevVersionContent(version.content);
-    setEditedContent(version.content);
-  }
-
-  const [prevPhotoFile, setPrevPhotoFile] = React.useState(photoFile);
   const [photoUrl, setPhotoUrl] = React.useState(null);
+  const prevPhotoFileRef = React.useRef(photoFile);
+  const prevVersionContentRef = React.useRef(version.content);
 
-  if (photoFile !== prevPhotoFile) {
-    setPrevPhotoFile(photoFile);
-    if (photoUrl) {
-      URL.revokeObjectURL(photoUrl);
+  React.useEffect(() => {
+    if (version.content !== prevVersionContentRef.current) {
+      prevVersionContentRef.current = version.content;
+      setEditedContent(version.content);
     }
-    setPhotoUrl(photoFile ? URL.createObjectURL(photoFile) : null);
-  }
+  }, [version.content]);
+
+  React.useEffect(() => {
+    if (photoFile !== prevPhotoFileRef.current) {
+      const prev = prevPhotoFileRef.current;
+      prevPhotoFileRef.current = photoFile;
+      if (photoUrl) {
+        URL.revokeObjectURL(photoUrl);
+      }
+      setPhotoUrl(photoFile ? URL.createObjectURL(photoFile) : null);
+    }
+  }, [photoFile, photoUrl]);
 
   useEffect(() => {
     return () => {

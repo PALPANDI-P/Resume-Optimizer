@@ -10,5 +10,6 @@ if root_dir not in sys.path:
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-# Import the Flask app
+# Import the Flask app — Vercel's Python runtime natively supports WSGI.
+# Export as `app` so the runtime auto-detects it.
 from backend.app import app

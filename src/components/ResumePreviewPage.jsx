@@ -91,7 +91,7 @@ export default function ResumePreviewPage({ data, onBackToEdit, onTemplateChange
             <div className="px-6 py-4 bg-slate-950 border-t border-slate-800 flex justify-end">
               <button
                 onClick={() => setShowTemplateModal(false)}
-                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-850 text-sm font-bold transition-all"
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-800 text-sm font-bold transition-all"
               >
                 Close Gallery
               </button>

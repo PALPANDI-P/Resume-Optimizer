@@ -65,17 +65,21 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   const renderClassicHeader = () => (
     <div className="px-2 pt-2 pb-1.5 border-b" style={{ borderColor: accent + '15' }}>
       <div className="text-[6px] font-black tracking-wide leading-tight truncate" style={{ color: header }}>
-        {(personal.name || 'Your Name').toUpperCase()}
+        {(personal.name || 'Jane Doe').toUpperCase()}
       </div>
       <div className="text-[3px] font-bold tracking-wider uppercase mt-[1px] truncate" style={{ color: accent + 'cc' }}>
-        {personal.role || 'Professional Title'}
+        {(personal.role || 'Senior Professional')}
       </div>
       <div className="flex gap-1.5 mt-[2px] text-[2.5px] flex-wrap" style={{ color: textColor + '99' }}>
-        <span className="truncate">{personal.email}</span>
-        <span>•</span>
-        <span className="truncate">{personal.phone}</span>
-        <span>•</span>
-        <span className="truncate">{personal.location}</span>
+        {(() => {
+          const contactParts = [personal.email, personal.phone, personal.location].filter(Boolean);
+          return contactParts.map((part, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <span>•</span>}
+              <span className="truncate">{part}</span>
+            </React.Fragment>
+          ));
+        })()}
       </div>
     </div>
   );
@@ -83,17 +87,21 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   const renderCenteredHeader = () => (
     <div className="px-2 pt-2.5 pb-1.5 text-center border-b" style={{ borderColor: accent + '15' }}>
       <div className="text-[6.5px] font-black tracking-wide leading-tight" style={{ color: header }}>
-        {(personal.name || 'Your Name').toUpperCase()}
+        {(personal.name || 'Jane Doe').toUpperCase()}
       </div>
       <div className="text-[3px] font-bold tracking-wider uppercase mt-[1px]" style={{ color: accent + 'cc' }}>
-        {personal.role || 'Professional Title'}
+        {(personal.role || 'Senior Professional')}
       </div>
       <div className="flex gap-1.5 mt-[2px] text-[2.5px] justify-center flex-wrap" style={{ color: textColor + '99' }}>
-        <span>{personal.email}</span>
-        <span>•</span>
-        <span>{personal.location}</span>
-        <span>•</span>
-        <span>{personal.phone}</span>
+        {(() => {
+          const contactParts = [personal.email, personal.phone, personal.location].filter(Boolean);
+          return contactParts.map((part, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <span>•</span>}
+              <span>{part}</span>
+            </React.Fragment>
+          ));
+        })()}
       </div>
     </div>
   );
@@ -102,16 +110,19 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
     <div className="px-2 pt-2 pb-1.5 border-b flex justify-between items-end" style={{ borderColor: accent + '15' }}>
       <div>
         <div className="text-[6px] font-black tracking-wide leading-tight truncate" style={{ color: header }}>
-          {(personal.name || 'Your Name').toUpperCase()}
+          {(personal.name || 'Jane Doe').toUpperCase()}
         </div>
         <div className="text-[3px] font-bold tracking-wider uppercase mt-[1px] truncate" style={{ color: accent + 'cc' }}>
-          {personal.role || 'Professional Title'}
+          {(personal.role || 'Senior Professional')}
         </div>
       </div>
       <div className="text-right text-[2.2px] leading-relaxed" style={{ color: textColor + '88' }}>
-        <div>{personal.email}</div>
-        <div>{personal.phone}</div>
-        <div>{personal.location}</div>
+        {(() => {
+          const contactParts = [personal.email, personal.phone, personal.location].filter(Boolean);
+          return contactParts.map((part, i) => (
+            <div key={i}>{part}</div>
+          ));
+        })()}
       </div>
     </div>
   );
@@ -119,17 +130,21 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   const renderBannerHeader = () => (
     <div className="px-2 py-1.5" style={{ backgroundColor: header }}>
       <div className="text-[6px] font-black text-white tracking-wide leading-tight truncate">
-        {(personal.name || 'Your Name').toUpperCase()}
+        {(personal.name || 'Jane Doe').toUpperCase()}
       </div>
       <div className="text-[3px] font-bold tracking-wider uppercase text-white/70 mt-[1px] truncate">
-        {personal.role || 'Professional Title'}
+        {(personal.role || 'Senior Professional')}
       </div>
       <div className="flex gap-1.5 mt-[2px] text-[2.2px] text-white/55 flex-wrap">
-        <span>{personal.email}</span>
-        <span>•</span>
-        <span>{personal.phone}</span>
-        <span>•</span>
-        <span>{personal.location}</span>
+        {(() => {
+          const contactParts = [personal.email, personal.phone, personal.location].filter(Boolean);
+          return contactParts.map((part, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && <span>•</span>}
+              <span>{part}</span>
+            </React.Fragment>
+          ));
+        })()}
       </div>
     </div>
   );
@@ -214,10 +229,10 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
     <div className="mb-1.5">
       <SectionTitle title="CONTACT" />
       <div className="space-y-[1px] text-[2.5px]" style={{ color: textColor + '99' }}>
-        <div className="truncate">{personal.email}</div>
-        <div className="truncate">{personal.phone}</div>
-        <div className="truncate">{personal.location}</div>
-        <div className="truncate">{personal.website}</div>
+        {personal.email && <div className="truncate">{personal.email}</div>}
+        {personal.phone && <div className="truncate">{personal.phone}</div>}
+        {personal.location && <div className="truncate">{personal.location}</div>}
+        {personal.website && <div className="truncate">{personal.website}</div>}
       </div>
     </div>
   );
@@ -375,19 +390,17 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
 
   // ─── CATEGORY BADGE ────────────────────────────────────────────────────
   const categoryBadgeColors = {
-    'ats-optimized': 'bg-green-600',
-    'corporate': 'bg-blue-700',
-    'modern': 'bg-emerald-600',
-    'executive': 'bg-indigo-700',
+    'ats': 'bg-green-600',
+    'professional': 'bg-blue-600',
+    'executive': 'bg-indigo-600',
+    'technical': 'bg-purple-600',
+    'beginner': 'bg-sky-600',
+    'corporate': 'bg-slate-700',
     'creative': 'bg-pink-600',
-    'minimal': 'bg-slate-600',
-    'academic': 'bg-amber-700',
-    'research': 'bg-teal-700',
+    'minimal': 'bg-teal-600',
     'student': 'bg-violet-600',
-    'entry-level': 'bg-sky-600',
-    'senior': 'bg-blue-800',
+    'modern': 'bg-emerald-600',
   };
-
   const badgeColor = categoryBadgeColors[template.category] || 'bg-slate-600';
 
   return (
@@ -403,8 +416,8 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
 
       {/* Hover overlay */}
       {!flat && (
-        <div className={`absolute inset-0 bg-gradient-to-t from-slate-900/95 via-slate-900/50 to-transparent
-          flex flex-col items-center justify-end p-2 pb-3.5 transition-all duration-300
+         <div className={`absolute inset-0 bg-gradient-to-t from-slate-900/95 via-slate-900/50 to-transparent
+          flex flex-col items-center justify-end p-2 pb-3.5 transition-all duration-300 pointer-events-none
           ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
           <span className="text-white font-bold text-[11px] text-center leading-tight mb-1 drop-shadow-md">{template.name}</span>
           <span className={`${badgeColor} text-white text-[8px] font-bold px-2 py-[2px] rounded-full uppercase tracking-wider shadow-sm`}>

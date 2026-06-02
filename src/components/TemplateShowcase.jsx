@@ -3,22 +3,23 @@ import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { TEMPLATES } from '../constants/templates';
 import TemplateThumbnail from './TemplateThumbnail';
 
-// Curated showcase: pick 1 template from each archetype to show diversity
 const SHOWCASE_ARCHETYPES = [
-  'classic-clean', 'modern-sidebar', 'executive-serif', 'executive-banner',
-  'minimal-mono', 'minimal-accent', 'creative-blocks', 'creative-timeline',
-  'two-column-balanced', 'academic-classic', 'ats-optimized', 'bold-header',
+  'ats-optimized', 'modern-sidebar', 'modern-sidebar-right', 'classic-clean',
+  'executive-banner', 'elegant-divider', 'academic-classic', 'creative-timeline',
+  'two-column-balanced', 'two-column-weighted', 'corporate-grid'
 ];
 
 const FILTER_PILLS = [
   { id: 'all', label: 'All Styles' },
-  { id: 'modern', label: 'Modern' },
-  { id: 'classic', label: 'Professional' },
-  { id: 'creative', label: 'Creative' },
-  { id: 'minimal', label: 'Minimal' },
+  { id: 'basic', label: 'Beginner' },
+  { id: 'expert', label: 'Expert' },
+  { id: 'it', label: 'IT / Technical' },
+  { id: 'government', label: 'Government' },
+  { id: 'business', label: 'Business' },
+  { id: 'ats', label: 'ATS' },
+  { id: 'professional', label: 'Professional' },
   { id: 'executive', label: 'Executive' },
-  { id: 'ats', label: 'ATS-Friendly' },
-  { id: 'academic', label: 'Academic' },
+  { id: 'creative', label: 'Creative' },
 ];
 
 const TemplateShowcase = memo(function TemplateShowcase() {
@@ -28,27 +29,23 @@ const TemplateShowcase = memo(function TemplateShowcase() {
   const [canScrollRight, setCanScrollRight] = useState(true);
 
   const showcaseTemplates = useMemo(() => {
-    // Pick hero templates from diverse archetypes
-    const heroes = [];
-    for (const arch of SHOWCASE_ARCHETYPES) {
-      const match = TEMPLATES.find(t => t.archetype === arch);
-      if (match) heroes.push(match);
+    if (activeFilter === 'all') {
+      return [...TEMPLATES];
     }
-
-    if (activeFilter === 'all') return heroes;
-
     const filterMap = {
-      'modern': ['modern-sidebar', 'modern-sidebar-right', 'bold-header'],
-      'classic': ['classic-clean', 'two-column-weighted', 'corporate-grid'],
-      'creative': ['creative-blocks', 'creative-timeline', 'bold-header'],
-      'minimal': ['minimal-mono', 'minimal-accent'],
-      'executive': ['executive-serif', 'executive-banner', 'elegant-divider'],
-      'ats': ['ats-optimized', 'classic-clean', 'compact-dense'],
-      'academic': ['academic-classic', 'academic-modern'],
+      'all': null,
+      'basic': ['ats-optimized', 'classic-clean', 'modern-sidebar', 'modern-sidebar-right', 'two-column-balanced'],
+      'expert': ['executive-banner', 'elegant-divider', 'classic-clean', 'corporate-grid', 'modern-banner'],
+      'it': ['modern-sidebar', 'modern-sidebar-right', 'creative-timeline', 'two-column-weighted', 'grid-layout', 'ats-optimized', 'sidebar-left'],
+      'government': ['ats-optimized', 'classic-clean', 'academic-classic', 'two-column-balanced', 'modern-banner'],
+      'business': ['corporate-grid', 'two-column-balanced', 'modern-banner', 'sidebar-left', 'sidebar-right', 'classic-clean'],
+      'ats': ['ats-optimized', 'classic-clean'],
+      'professional': ['classic-clean', 'modern-banner', 'two-column-balanced', 'corporate-grid'],
+      'executive': ['executive-banner', 'elegant-divider', 'corporate-grid', 'modern-banner'],
+      'creative': ['creative-timeline', 'grid-layout', 'modern-sidebar', 'modern-sidebar-right'],
     };
-
     const archetypes = filterMap[activeFilter] || [];
-    return heroes.filter(t => archetypes.includes(t.archetype));
+    return TEMPLATES.filter(t => archetypes.includes(t.archetype));
   }, [activeFilter]);
 
   const updateScrollButtons = () => {
@@ -65,6 +62,10 @@ const TemplateShowcase = memo(function TemplateShowcase() {
       updateScrollButtons();
     }
     return () => el?.removeEventListener('scroll', updateScrollButtons);
+  }, [showcaseTemplates]);
+
+  useEffect(() => {
+    updateScrollButtons();
   }, [showcaseTemplates]);
 
   const scroll = (dir) => {
@@ -139,7 +140,7 @@ const TemplateShowcase = memo(function TemplateShowcase() {
             {showcaseTemplates.map((template) => (
               <div
                 key={template.id}
-                className="flex-shrink-0 w-[220px] snap-start relative group"
+                className="flex-shrink-0 min-w-[220px] w-[220px] snap-start relative group"
               >
                 <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-5 h-5 bg-blue-400 rounded-full border-2 border-white shadow-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <TemplateThumbnail template={template} isSelected={false} />

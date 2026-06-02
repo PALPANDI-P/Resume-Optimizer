@@ -35,7 +35,18 @@ allowed_origins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000'
 ]
-CORS(app, origins=allowed_origins)
+
+# Add Vercel deployment URLs dynamically
+vercel_url = os.environ.get('VERCEL_URL')
+if vercel_url:
+    # VERCEL_URL doesn't include protocol
+    allowed_origins.append(f'https://{vercel_url}')
+
+# Add any custom production URL
+if frontend_url not in allowed_origins:
+    allowed_origins.append(frontend_url)
+
+CORS(app, origins=allowed_origins, supports_credentials=True)
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 

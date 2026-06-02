@@ -69,7 +69,7 @@ const TemplateSelector = memo(function TemplateSelector({ selectedTemplateId, on
             className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border
               ${activeCategory === cat.id
                 ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25'
-                : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-650 hover:text-slate-200'
+                : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200'
               }`}
           >
             {cat.label}

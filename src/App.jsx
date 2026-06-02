@@ -52,7 +52,7 @@ function App() {
   }, []);
   
   // Active Resume Data
-  const [selectedTemplateId, setSelectedTemplateId] = useState(TEMPLATES[0].id);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(TEMPLATES[0]?.id || '');
   const [builderData, setBuilderData] = useState(() => {
     try {
       const saved = localStorage.getItem('resumeoptimizer_anonymous_draft');

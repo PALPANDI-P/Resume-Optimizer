@@ -33,12 +33,14 @@ export default function ResumeOptimizer({
   const [checkedItems, setCheckedItems] = useState({});
 
   const [prevActiveResumeText, setPrevActiveResumeText] = useState(activeResumeText);
-  if (activeResumeText !== prevActiveResumeText) {
-    setPrevActiveResumeText(activeResumeText);
-    if (!activeResumeText && sourceType === 'active') {
-      setSourceType('upload');
+  React.useEffect(() => {
+    if (activeResumeText !== prevActiveResumeText) {
+      setPrevActiveResumeText(activeResumeText);
+      if (!activeResumeText && sourceType === 'active') {
+        setSourceType('upload');
+      }
     }
-  }
+  }, [activeResumeText, sourceType]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -591,11 +593,11 @@ export default function ResumeOptimizer({
                     <div className="space-y-2">
                       <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        Matched Keywords ({analysis.matched_skills.length})
+                        Matched Keywords ({(analysis.matched_skills || []).length})
                       </h3>
                       <div className="flex flex-wrap gap-1.5 p-4 bg-emerald-50/30 rounded-2xl border border-emerald-100/50">
-                        {analysis.matched_skills.length > 0 ? (
-                          analysis.matched_skills.map((kw, i) => (
+                        {(analysis.matched_skills || []).length > 0 ? (
+                          (analysis.matched_skills || []).map((kw, i) => (
                             <span 
                               key={i} 
                               className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-lg border border-emerald-200/40"
@@ -613,11 +615,11 @@ export default function ResumeOptimizer({
                     <div className="space-y-2">
                       <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                         <AlertCircle className="w-4 h-4 text-slate-400" />
-                        Missing Core Keywords ({analysis.skills_to_emphasize.length})
+                        Missing Core Keywords ({(analysis.skills_to_emphasize || []).length})
                       </h3>
                       <div className="flex flex-wrap gap-1.5 p-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                        {analysis.skills_to_emphasize.length > 0 ? (
-                          analysis.skills_to_emphasize.map((kw, i) => (
+                        {(analysis.skills_to_emphasize || []).length > 0 ? (
+                          (analysis.skills_to_emphasize || []).map((kw, i) => (
                             <span 
                               key={i} 
                               className="bg-white border-2 border-dashed border-slate-200 text-slate-600 text-xs font-bold px-2.5 py-1 rounded-lg"

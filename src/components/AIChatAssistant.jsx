@@ -6,7 +6,7 @@ import {
 import { getLocalChatbotResponse } from '../utils/localChatbot';
 
 const formatMessageText = (text, isUser) => {
-  if (!text) return null;
+  if (!text) return <span className="text-slate-400 italic">No response</span>;
   const blocks = text.split(/(```[\s\S]*?```)/g);
   return blocks.map((block, bIdx) => {
     if (block.startsWith('```') && block.endsWith('```')) {
@@ -278,7 +278,7 @@ export default function AIChatAssistant({ activeResumeText, activeResumeData, on
       <div className="flex-1 grid lg:grid-cols-12 gap-6 mt-6 overflow-hidden">
         
         {/* Quick Prompts Panel (4 cols) */}
-        <div className="lg:col-span-4 space-y-4 flex flex-col justify-start overflow-y-auto pr-2 pb-4">
+        <div className="lg:col-span-4 space-y-4 flex flex-col justify-start overflow-y-auto pr-2 pb-4 max-h-[40vh] lg:max-h-none">
           <div className="bg-slate-50 border border-slate-200/50 p-5 rounded-3xl space-y-4">
             <h3 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-amber-500" />
@@ -294,7 +294,7 @@ export default function AIChatAssistant({ activeResumeText, activeResumeData, on
                   key={idx}
                   onClick={() => handleSend(item.prompt)}
                   disabled={isTyping}
-                  className="w-full text-left p-3 bg-white border border-slate-200 hover:border-blue-500 rounded-2xl transition-all shadow-sm group hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-65 disabled:hover:border-slate-200"
+                  className="w-full text-left p-3 bg-white border border-slate-200 hover:border-blue-500 rounded-2xl transition-all shadow-sm group hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:border-slate-200"
                 >
                   <div className="text-xs font-black text-slate-800 group-hover:text-blue-600 flex items-center justify-between">
                     {item.title}
@@ -324,7 +324,7 @@ export default function AIChatAssistant({ activeResumeText, activeResumeData, on
         {/* Message Window (8 cols) */}
         <div className="lg:col-span-8 bg-white border border-slate-200/60 rounded-3xl shadow-sm flex flex-col overflow-hidden h-full">
           {/* Scrollable messages container */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/30 min-h-[100px] flex flex-col justify-end">
             {messages.map((msg, index) => (
               <div 
                 key={index} 
@@ -340,10 +340,10 @@ export default function AIChatAssistant({ activeResumeText, activeResumeData, on
                 </div>
 
                 {/* Message Bubble */}
-                <div className={`px-4 py-3.5 rounded-2xl max-w-[85%] text-xs shadow-sm leading-relaxed ${
+                <div className={`px-4 py-3.5 rounded-2xl max-w-[85%] text-xs shadow-sm leading-relaxed break-words animate-fade-in ${
                   msg.role === 'user' 
-                    ? 'bg-blue-600 text-white rounded-tr-none font-medium' 
-                    : 'bg-white text-slate-750 border border-slate-200/50 rounded-tl-none font-normal'
+                     ? 'bg-blue-600 text-white rounded-tr-none font-medium' 
+                     : 'bg-white text-slate-800 border border-slate-200/50 rounded-tl-none font-normal'
                 }`}>
                   {formatMessageText(msg.text, msg.role === 'user')}
                 </div>
@@ -372,6 +372,7 @@ export default function AIChatAssistant({ activeResumeText, activeResumeData, on
                 type="text"
                 value={input}
                 onChange={e => setInput(e.target.value)}
+                aria-label="Chat message input"
                 placeholder={
                   activeResumeData?.personal?.name 
                     ? "Ask me to edit a bullet point, scan for keywords, or check formatting..." 

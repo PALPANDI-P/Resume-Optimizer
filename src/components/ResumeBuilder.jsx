@@ -98,22 +98,41 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
   const [activeStep, setActiveStep] = useState(0);
   const [errors, setErrors] = useState({});
   const lastSavedDataRef = React.useRef('');
+  const isInitialMount = React.useRef(true);
+  const prevInitialDataRef = React.useRef(null);
+  const isInternalUpdate = React.useRef(false);
+
+  // Call real-time onChange
+  useEffect(() => {
+    if (onChange && !isInitialMount.current) {
+      if (isInternalUpdate.current) {
+        isInternalUpdate.current = false;
+        return;
+      }
+      const serialized = JSON.stringify(data);
+      if (serialized !== lastSavedDataRef.current) {
+        lastSavedDataRef.current = serialized;
+        onChange(data);
+      }
+    }
+  }, [data, onChange]);
 
   // Sync when initialData changes (e.g. loaded an example)
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      prevInitialDataRef.current = JSON.stringify(initialData);
+      return;
+    }
+
     if (initialData) {
       const normalized = normalizeData(initialData);
       const serialized = JSON.stringify(normalized);
-      if (serialized !== lastSavedDataRef.current) {
-        setData(prev => {
-          if (JSON.stringify(normalizeData(prev)) === serialized) {
-            return prev;
-          }
-          return normalized;
-        });
-        lastSavedDataRef.current = serialized;
+      if (serialized !== prevInitialDataRef.current) {
+        prevInitialDataRef.current = serialized;
+        isInternalUpdate.current = true;
+        setData(normalized);
 
-        // Clamp activeStep based on new normalized data
         const nextSteps = allSteps.filter(step => {
           if (!step.key) return true;
           return normalized.visibleSections[step.key] !== false;
@@ -122,17 +141,6 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
       }
     }
   }, [initialData]);
-
-  // Call real-time onChange
-  useEffect(() => {
-    if (onChange) {
-      const serialized = JSON.stringify(data);
-      if (serialized !== lastSavedDataRef.current) {
-        lastSavedDataRef.current = serialized;
-        onChange(data);
-      }
-    }
-  }, [data, onChange]);
 
   // Debounce auto-save
   useEffect(() => {
@@ -288,7 +296,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                     className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm text-slate-800 ${
                       errors.phone ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200'
                     }`} 
-                    placeholder="+1 (555) 019-2834"
+                    placeholder="Phone with country code"
                   />
                 </div>
                 {errors.phone && <p className="text-[11px] text-red-500 font-semibold mt-1">{errors.phone}</p>}
@@ -302,7 +310,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                     value={data.personal.location || ''}
                     onChange={(e) => handlePersonalChange('location', e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm text-slate-800" 
-                    placeholder="San Francisco, CA"
+                    placeholder="City, State"
                   />
                 </div>
               </div>
@@ -319,7 +327,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                     className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm text-slate-800 ${
                       errors.website ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-200'
                     }`} 
-                    placeholder="Website / Portfolio URL"
+                    placeholder="Portfolio URL (optional)"
                   />
                 </div>
                 {errors.website && <p className="text-[11px] text-red-500 font-semibold mt-1">{errors.website}</p>}
@@ -401,7 +409,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 value={data.summary || ''}
                 onChange={(e) => setData({...data, summary: e.target.value})}
                 className="w-full h-44 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none resize-none text-sm leading-relaxed text-slate-800 transition-all" 
-                placeholder="Software Engineer with 3+ years of experience in web development. Proven track record of designing and implementing high-throughput cloud-native APIs and responsive React interfaces, reducing page latency by 35%."
+                placeholder="Write a 2-3 sentence professional summary highlighting your key strengths and achievements..."
               />
               <p className="text-[11px] text-slate-400 flex items-center gap-1">
                 <HelpCircle className="w-3.5 h-3.5 text-blue-500" />
@@ -420,7 +428,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 value={data.objective || ''}
                 onChange={(e) => setData({...data, objective: e.target.value})}
                 className="w-full h-44 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none resize-none text-sm leading-relaxed text-slate-800 transition-all" 
-                placeholder="Ambitious and analytical computer science graduate seeking an entry-level Software Engineer position to leverage academic projects in full-stack web development and algorithm design to deliver high-quality code and support company objectives."
+                placeholder="State your career goal and what you aim to achieve in your next role..."
               />
               <p className="text-[11px] text-slate-400 flex items-center gap-1">
                 <HelpCircle className="w-3.5 h-3.5 text-blue-500" />
@@ -444,13 +452,13 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </button>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input 
-                    placeholder="Senior Software Engineer (e.g. Lead Developer)" 
+                    placeholder="Job title" 
                     value={exp.role || ''} 
                     onChange={e => updateDataItem('experience', idx, 'role', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                   <input 
-                    placeholder="CloudScale Technologies (Company)" 
+                    placeholder="Company name" 
                     value={exp.company || ''} 
                     onChange={e => updateDataItem('experience', idx, 'company', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -458,20 +466,20 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input 
-                    placeholder="Jan 2022 - Present (or range)" 
+                    placeholder="Start date – End date" 
                     value={exp.dates || ''} 
                     onChange={e => updateDataItem('experience', idx, 'dates', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                   <input 
-                    placeholder="San Francisco, CA" 
+                    placeholder="City, State" 
                     value={exp.location || ''} 
                     onChange={e => updateDataItem('experience', idx, 'location', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
                 <textarea 
-                  placeholder="Key accomplishments and responsibilities (e.g.,&#10;- Spearheaded migration of legacy codebase to serverless API architecture, improving system response latency by 24%.&#10;- Collaborated with product designers to implement responsive React web features, driving a 12% click-through rate increase.)" 
+                  placeholder="Key achievements and responsibilities\n- Use bullet points starting with - or •\n- Quantify impact where possible (%, $, numbers)" 
                   value={exp.description || ''} 
                   onChange={e => updateDataItem('experience', idx, 'description', e.target.value)}
                   className="w-full h-32 p-3 bg-slate-50 border border-slate-100 rounded-lg text-sm resize-none text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
@@ -503,13 +511,13 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </button>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input 
-                    placeholder="Software Engineering Intern (e.g. Marketing Intern)" 
+                    placeholder="Internship role title" 
                     value={intern.role || ''} 
                     onChange={e => updateDataItem('internships', idx, 'role', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                   <input 
-                    placeholder="ByteCraft Solutions (Company)" 
+                    placeholder="Company name" 
                     value={intern.company || ''} 
                     onChange={e => updateDataItem('internships', idx, 'company', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -517,20 +525,20 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input 
-                    placeholder="Jun 2023 - Aug 2023" 
+                    placeholder="Start – End date" 
                     value={intern.dates || ''} 
                     onChange={e => updateDataItem('internships', idx, 'dates', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                   <input 
-                    placeholder="Austin, TX" 
+                    placeholder="City, State" 
                     value={intern.location || ''} 
                     onChange={e => updateDataItem('internships', idx, 'location', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
                 <textarea 
-                  placeholder="Responsibilities & outcomes (e.g.,&#10;- Assisted in debugging database performance bottlenecks and optimizing database queries.&#10;- Developed responsive web modules using JavaScript and HTML/CSS.)" 
+                  placeholder="Key tasks and outcomes\n- Start each bullet with - or •\n- Focus on what you learned and delivered" 
                   value={intern.description || ''} 
                   onChange={e => updateDataItem('internships', idx, 'description', e.target.value)}
                   className="w-full h-30 p-3 bg-slate-50 border border-slate-100 rounded-lg text-sm resize-none text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
@@ -562,13 +570,13 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </button>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input 
-                    placeholder="B.S. in Computer Science (Degree / Major)" 
+                    placeholder="Degree / Major" 
                     value={edu.degree || ''} 
                     onChange={e => updateDataItem('education', idx, 'degree', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                   <input 
-                    placeholder="State University" 
+                    placeholder="University / School" 
                     value={edu.school || ''} 
                     onChange={e => updateDataItem('education', idx, 'school', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -576,13 +584,13 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input 
-                    placeholder="2019 - 2023" 
+                    placeholder="Start year – End year" 
                     value={edu.dates || ''} 
                     onChange={e => updateDataItem('education', idx, 'dates', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                   <input 
-                    placeholder="GPA: 3.9/4.0, Magna Cum Laude, Dean's List (all semesters)" 
+                    placeholder="Honors, GPA (optional)" 
                     value={edu.honors || ''} 
                     onChange={e => updateDataItem('education', idx, 'honors', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -618,13 +626,13 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <input 
-                  placeholder="Programming Languages (e.g. Databases)" 
+                  placeholder="Skill category (e.g. Languages, Frameworks)" 
                   value={skillGroup.category || ''} 
                   onChange={e => updateDataItem('skills', idx, 'category', e.target.value)}
                   className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                 />
                 <input 
-                  placeholder="JavaScript, TypeScript, Python, SQL, HTML/CSS" 
+                  placeholder="List skills separated by commas" 
                   value={skillGroup.items || ''} 
                   onChange={e => updateDataItem('skills', idx, 'items', e.target.value)}
                   className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -659,13 +667,13 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <input 
-                  placeholder="Cloud & DevOps (Category)" 
+                  placeholder="Skill category (e.g. Cloud, DevOps, Tools)" 
                   value={skillGroup.category || ''} 
                   onChange={e => updateDataItem('technicalSkills', idx, 'category', e.target.value)}
                   className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                 />
                 <input 
-                  placeholder="AWS (S3, EC2, Lambda), Docker, Kubernetes, Git, CI/CD pipelines" 
+                  placeholder="Technologies and tools" 
                   value={skillGroup.items || ''} 
                   onChange={e => updateDataItem('technicalSkills', idx, 'items', e.target.value)}
                   className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -693,7 +701,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 value={data.softSkills || ''}
                 onChange={(e) => setData({...data, softSkills: e.target.value})}
                 className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all text-sm text-slate-800" 
-                placeholder="Communication, Leadership, Problem Solving, Teamwork"
+                placeholder="Soft skills separated by commas"
               />
               <p className="text-[11px] text-slate-400 flex items-center gap-1">
                 <HelpCircle className="w-3.5 h-3.5 text-blue-500" />
@@ -726,20 +734,20 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </button>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input 
-                    placeholder="Distributed Key-Value Cache Engine (Project Name)" 
+                    placeholder="Project name" 
                     value={proj.name || ''} 
                     onChange={e => updateDataItem('projects', idx, 'name', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                   <input 
-                    placeholder="github.com/username/cache-engine" 
+                    placeholder="Project link (optional)" 
                     value={proj.link || ''} 
                     onChange={e => updateDataItem('projects', idx, 'link', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
                 <textarea 
-                  placeholder="- Built a high-concurrency memory caching core in Go handling 15,000+ operations per second.&#10;- Optimized memory allocations, reducing garbage collection pauses by 45%." 
+                  placeholder="Project description\n- Use bullet points starting with - or •\n- Highlight technologies used and outcomes achieved" 
                   value={proj.description || ''} 
                   onChange={e => updateDataItem('projects', idx, 'description', e.target.value)}
                   className="w-full h-24 p-3 bg-slate-50 border border-slate-100 rounded-lg text-sm resize-none text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
@@ -771,7 +779,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </button>
                 <div className="flex-1">
                   <input 
-                    placeholder="AWS Certified Solutions Architect – Associate" 
+                    placeholder="Certificate name" 
                     value={cert.name || ''} 
                     onChange={e => updateDataItem('certifications', idx, 'name', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -779,7 +787,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </div>
                 <div className="w-28">
                   <input 
-                    placeholder="2024" 
+                    placeholder="Year obtained" 
                     value={cert.year || ''} 
                     onChange={e => updateDataItem('certifications', idx, 'year', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -812,7 +820,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </button>
                 <div className="flex-1 w-full">
                   <input 
-                    placeholder="1st Place, Regional Tech Hackathon (Achievement Title)" 
+                    placeholder="Achievement title" 
                     value={ach.name || ''} 
                     onChange={e => updateDataItem('achievements', idx, 'name', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -820,7 +828,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </div>
                 <div className="flex-1 w-full">
                   <input 
-                    placeholder="Developed a collaborative real-time code editor with operational transformation syncing." 
+                    placeholder="Brief description of the achievement" 
                     value={ach.details || ''} 
                     onChange={e => updateDataItem('achievements', idx, 'details', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -853,7 +861,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </button>
                 <div className="flex-1 w-full">
                   <input 
-                    placeholder="Award Title (e.g. Employee of the Year)" 
+                    placeholder="Award title" 
                     value={award.title || ''} 
                     onChange={e => updateDataItem('awards', idx, 'title', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -861,7 +869,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </div>
                 <div className="flex-1 w-full">
                   <input 
-                    placeholder="Granting Organization / Issuer" 
+                    placeholder="Issuing organization" 
                     value={award.issuer || ''} 
                     onChange={e => updateDataItem('awards', idx, 'issuer', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -869,7 +877,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </div>
                 <div className="w-full md:w-28">
                   <input 
-                    placeholder="Year" 
+                    placeholder="Year received" 
                     value={award.year || ''} 
                     onChange={e => updateDataItem('awards', idx, 'year', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -902,7 +910,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </button>
                 <div className="flex-1">
                   <input 
-                    placeholder="Language Name (e.g. Spanish)" 
+                    placeholder="Language" 
                     value={lang.name || ''} 
                     onChange={e => updateDataItem('languages', idx, 'name', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -910,7 +918,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                 </div>
                 <div className="w-40">
                   <input 
-                    placeholder="Proficiency (e.g. Fluent)" 
+                    placeholder="Proficiency level" 
                     value={lang.proficiency || ''} 
                     onChange={e => updateDataItem('languages', idx, 'proficiency', e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1060,7 +1068,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-600">Publication Title</label>
                     <input 
-                      placeholder="e.g. A Survey of Deep Learning Methods" 
+                      placeholder="Publication title" 
                       value={pub.title || ''} 
                       onChange={e => updateDataItem('publications', idx, 'title', e.target.value)}
                       className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1069,7 +1077,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-600">Journal / Publisher</label>
                     <input 
-                      placeholder="e.g. IEEE Transactions on Neural Networks" 
+                      placeholder="Journal or publisher" 
                       value={pub.journal || ''} 
                       onChange={e => updateDataItem('publications', idx, 'journal', e.target.value)}
                       className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1080,7 +1088,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-600">Year</label>
                     <input 
-                      placeholder="e.g. 2023" 
+                      placeholder="Year" 
                       value={pub.year || ''} 
                       onChange={e => updateDataItem('publications', idx, 'year', e.target.value)}
                       className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1089,7 +1097,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-600">Link</label>
                     <input 
-                      placeholder="e.g. https://doi.org/10.1109/..." 
+                      placeholder="DOI or link (optional)" 
                       value={pub.link || ''} 
                       onChange={e => updateDataItem('publications', idx, 'link', e.target.value)}
                       className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1125,7 +1133,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-600">Volunteer Role</label>
                     <input 
-                      placeholder="e.g. Community Coordinator" 
+                      placeholder="Volunteer role" 
                       value={vol.role || ''} 
                       onChange={e => updateDataItem('volunteerExperience', idx, 'role', e.target.value)}
                       className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1134,7 +1142,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-600">Organization</label>
                     <input 
-                      placeholder="e.g. American Red Cross" 
+                      placeholder="Organization name" 
                       value={vol.organization || ''} 
                       onChange={e => updateDataItem('volunteerExperience', idx, 'organization', e.target.value)}
                       className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1188,7 +1196,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-600">Reference Name</label>
                     <input 
-                      placeholder="Reference Name" 
+                      placeholder="Reference full name" 
                       value={ref.name || ''} 
                       onChange={e => {
                         const sanitizedVal = e.target.value.replace(/[^a-zA-Z\s'\-.,]/g, '');
@@ -1200,7 +1208,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-600">Job Title / Relationship</label>
                     <input 
-                      placeholder="e.g. Research Director / Manager" 
+                      placeholder="Title / relationship" 
                       value={ref.title || ''} 
                       onChange={e => updateDataItem('references', idx, 'title', e.target.value)}
                       className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1211,7 +1219,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-600">Company / Organization</label>
                     <input 
-                      placeholder="e.g. Tech Corp Inc." 
+                      placeholder="Company or organization" 
                       value={ref.company || ''} 
                       onChange={e => updateDataItem('references', idx, 'company', e.target.value)}
                       className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -1220,7 +1228,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-slate-600">Contact Info</label>
                     <input 
-                      placeholder="Contact Details" 
+                      placeholder="Email or phone (optional)" 
                       value={ref.contact || ''} 
                       onChange={e => updateDataItem('references', idx, 'contact', e.target.value)}
                       className="w-full p-2.5 bg-slate-50 border border-slate-100 rounded-lg text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"

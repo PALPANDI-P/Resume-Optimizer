@@ -168,11 +168,7 @@ const ChatBot = memo(function ChatBot({ resumeText }) {
   return (
     <>
       {/* Floating Toggle Button */}
-      <div className={`fixed bottom-6 right-6 flex items-center gap-3 z-50 transition-all duration-300 ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100'}`}>
-        <div className="bg-slate-900/90 text-white text-[10px] font-black px-3 py-2 rounded-xl shadow-xl border border-slate-800 animate-[bounce_2s_infinite] hidden sm:flex items-center gap-1.5 backdrop-blur-sm">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-          AI Career Advisor 🌟
-        </div>
+      <div className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100'}`}>
         <button
           onClick={() => setIsOpen(true)}
           className="relative w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-xl shadow-blue-500/40 hover:-translate-y-1 transition-all duration-300 active:scale-95 group"
@@ -253,7 +249,7 @@ const ChatBot = memo(function ChatBot({ resumeText }) {
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Ask about your resume..."
+              placeholder="Ask me anything about resumes, careers, or job search..."
               className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
               disabled={isTyping}
             />

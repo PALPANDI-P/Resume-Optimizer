@@ -7,5 +7,9 @@ dist
 .env
 backend/.env
 backend/instance/*.db
+instance/
 __pycache__
 backend/venv
+backend/__pycache__
+backend/services/__pycache__
+.vercel

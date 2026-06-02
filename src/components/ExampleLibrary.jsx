@@ -20,7 +20,7 @@ export default function ExampleLibrary({ onSelectExample, onViewChange }) {
       const matchesSearch = 
         ex.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         ex.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ex.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
+        (ex.skills || []).some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
       
       const matchesCategory = selectedCategory === 'all' || ex.category === selectedCategory;
       const matchesLevel = selectedLevel === 'all' || ex.experienceLevel.toLowerCase() === selectedLevel.toLowerCase();
