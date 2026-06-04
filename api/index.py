@@ -19,6 +19,7 @@ load_dotenv(os.path.join(backend_dir, '.env'))
 from app import app
 
 # WSGI Middleware to restore /api prefix if stripped by Vercel routing
+# Wrap Flask app with VercelPathMiddleware to handle serverless route routing correctly
 class VercelPathMiddleware:
     def __init__(self, wsgi_app):
         self.wsgi_app = wsgi_app
