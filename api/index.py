@@ -17,3 +17,16 @@ load_dotenv(os.path.join(backend_dir, '.env'))
 # Import Flask app — Vercel's Python runtime natively supports WSGI.
 # Use direct import since backend_dir is in sys.path.
 from app import app
+
+# WSGI Middleware to restore /api prefix if stripped by Vercel routing
+class VercelPathMiddleware:
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        path = environ.get('PATH_INFO', '')
+        if not path.startswith('/api'):
+            environ['PATH_INFO'] = '/api' + path
+        return self.wsgi_app(environ, start_response)
+
+app.wsgi_app = VercelPathMiddleware(app.wsgi_app)
