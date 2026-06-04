@@ -40,6 +40,11 @@ export default [
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
     },
+    settings: {
+      react: {
+        version: 'detect',
+      },
+    },
     rules: {
       ...js.configs.recommended.rules,
       ...reactPlugin.configs.recommended.rules,

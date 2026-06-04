@@ -1,8 +1,12 @@
 {
   "version": 2,
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
   "functions": {
-    "api/index.py": {
-      "runtime": "python3.11"
+    "api/**/*.py": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
@@ -11,7 +15,7 @@
       "destination": "/api/index.py"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|favicon.ico|vite.svg|api/).*)",
       "destination": "/index.html"
     }
   ]

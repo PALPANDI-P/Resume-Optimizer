@@ -71,7 +71,7 @@ const Navbar = memo(function Navbar({ user, onAuthClick, currentView, onViewChan
               {user ? (
                 <>
                   <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px]">
-                    {user.name.charAt(0)}
+                    {user?.name ? user.name.charAt(0) : 'U'}
                   </div>
                   Dashboard
                 </>

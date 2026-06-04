@@ -149,7 +149,7 @@ export default function DashboardModal({ user, onClose, onLogout, onEdit }) {
         <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-black text-xl shadow-lg shadow-blue-200">
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </div>
             <div>
               <h2 className="text-xl font-black text-slate-900 leading-none mb-1">{user?.name + "'s Dashboard"}</h2>

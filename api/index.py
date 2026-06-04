@@ -1,15 +1,19 @@
 import os
 import sys
 
-# Ensure root and backend directories are in sys.path
+# Resolve directories relative to this file
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 backend_dir = os.path.join(root_dir, 'backend')
 
-if root_dir not in sys.path:
-    sys.path.insert(0, root_dir)
-if backend_dir not in sys.path:
-    sys.path.insert(0, backend_dir)
+# Add both root and backend to sys.path for import resolution
+for d in [root_dir, backend_dir]:
+    if d not in sys.path:
+        sys.path.insert(0, d)
 
-# Import the Flask app — Vercel's Python runtime natively supports WSGI.
-# Export as `app` so the runtime auto-detects it.
-from backend.app import app
+# Load backend .env before importing the app so env vars are available
+from dotenv import load_dotenv
+load_dotenv(os.path.join(backend_dir, '.env'))
+
+# Import Flask app — Vercel's Python runtime natively supports WSGI.
+# Use direct import since backend_dir is in sys.path.
+from app import app

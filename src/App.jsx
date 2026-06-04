@@ -29,8 +29,12 @@ function App() {
   
   // Auth & Modals
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('resumeoptimizer_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('resumeoptimizer_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
   const [activeModal, setActiveModal] = useState(null);
 
