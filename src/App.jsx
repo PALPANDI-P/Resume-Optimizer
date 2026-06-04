@@ -27,7 +27,7 @@ import { TEMPLATES } from './constants/templates';
 function App() {
   const [currentView, setCurrentView] = useState('home'); // home, builder, preview, optimization, templates, examples, coverletter, aiassistant, importer
   
-  // Auth & Modals
+  // Auth & Modals (Safeguarded with try-catch to prevent corrupt local storage from causing a blank page)
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('resumeoptimizer_user');
