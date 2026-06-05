@@ -48,7 +48,7 @@ if frontend_url not in allowed_origins:
 
 CORS(app, origins=allowed_origins, supports_credentials=True)
 
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_FILE_SIZE = min(10 * 1024 * 1024, 4 * 1024 * 1024)  # 4 MB (Vercel free body limit: ~4.5MB)
 
 
 @app.route('/api/generate-resumes', methods=['POST'])

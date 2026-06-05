@@ -29,3 +29,7 @@ backend/services/__pycache__
 
 # Vercel
 .vercel
+
+# Kilo agent
+.kilo
+

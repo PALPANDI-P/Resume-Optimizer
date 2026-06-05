@@ -1,8 +1,17 @@
 import React, { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { Upload, FileText, CheckCircle2, Users, Sparkles, File, X } from 'lucide-react';
 
+const MAX_UPLOAD_SIZE_BYTES = 4.5 * 1024 * 1024;
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
 const ResumeUpload = memo(function ResumeUpload({ resumeFile, setResumeFile, photoFile, setPhotoFile }) {
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadError, setUploadError] = useState('');
   const photoUrlRef = useRef(null);
 
   useEffect(() => {
@@ -11,6 +20,37 @@ const ResumeUpload = memo(function ResumeUpload({ resumeFile, setResumeFile, pho
     else photoUrlRef.current = null;
     return () => { if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current); };
   }, [photoFile]);
+
+  const validateFileSize = useCallback((file) => {
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      setUploadError(`File too large (${formatFileSize(file.size)}). Maximum allowed size is 4.5 MB.`);
+      return false;
+    }
+    setUploadError('');
+    return true;
+  }, []);
+
+  const handleFileChange = useCallback((e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (validateFileSize(file)) {
+        setResumeFile(file);
+      }
+    }
+  }, [setResumeFile, validateFileSize]);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files && files[0]) {
+      const file = files[0];
+      if (validateFileSize(file)) {
+        setResumeFile(file);
+      }
+    }
+  }, [setResumeFile, validateFileSize]);
 
   const handleDrag = useCallback((e) => {
     e.preventDefault();
@@ -28,28 +68,6 @@ const ResumeUpload = memo(function ResumeUpload({ resumeFile, setResumeFile, pho
     e.stopPropagation();
     setIsDragging(false);
   }, []);
-
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    const files = e.dataTransfer.files;
-    if (files && files[0]) {
-      setResumeFile(files[0]);
-    }
-  }, [setResumeFile]);
-
-  const handleFileChange = useCallback((e) => {
-    if (e.target.files && e.target.files[0]) {
-      setResumeFile(e.target.files[0]);
-    }
-  }, [setResumeFile]);
-
-  const formatFileSize = (bytes) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / 1048576).toFixed(1) + ' MB';
-  };
 
   return (
     <div className="glass-card p-6 sm:p-8" id="resume-upload-card">
@@ -136,6 +154,12 @@ const ResumeUpload = memo(function ResumeUpload({ resumeFile, setResumeFile, pho
         <span className="font-medium">OR</span>
         <span className="w-8 h-px bg-slate-200"></span>
       </div>
+
+      {uploadError && (
+        <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-medium text-center">
+          {uploadError}
+        </div>
+      )}
 
       <button 
         onClick={() => alert("LinkedIn import is coming in a future update. Upload your resume above for the best results.")}
