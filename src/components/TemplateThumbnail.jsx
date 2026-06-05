@@ -421,7 +421,7 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
           ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
           <span className="text-white font-bold text-[11px] text-center leading-tight mb-1 drop-shadow-md">{template.name}</span>
           <span className={`${badgeColor} text-white text-[8px] font-bold px-2 py-[2px] rounded-full uppercase tracking-wider shadow-sm`}>
-            {template.category.replace(/-/g, ' ')}
+            {(template.category || '').replace(/-/g, ' ')}
           </span>
           {isSelected && <CheckCircle2 className="w-4 h-4 text-white mt-1.5 drop-shadow-md" />}
         </div>

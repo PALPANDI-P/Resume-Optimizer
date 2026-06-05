@@ -33,7 +33,7 @@ const TemplateGallery = ({ activeTemplateId, onSelectTemplate, currentBuilderDat
         t.name.toLowerCase().includes(q) ||
         t.id.toLowerCase().includes(q) ||
         t.archetype.toLowerCase().includes(q) ||
-        (t.categories && t.categories.some(c => c.replace(/-/g, ' ').includes(q)))
+        (t.categories && t.categories.some(c => (c || '').replace(/-/g, ' ').includes(q)))
       );
     }
 
@@ -194,7 +194,7 @@ const TemplateGallery = ({ activeTemplateId, onSelectTemplate, currentBuilderDat
                             key={idx}
                             className="px-1.5 py-[2px] bg-slate-50 border border-slate-200/80 text-slate-500 rounded text-[9px] font-bold capitalize"
                           >
-                            {cat.replace(/-/g, ' ')}
+                            {(cat || '').replace(/-/g, ' ')}
                           </span>
                         ))}
                       </div>

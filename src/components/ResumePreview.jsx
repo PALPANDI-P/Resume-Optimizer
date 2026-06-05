@@ -465,7 +465,7 @@ function ResumePreview({ version, templateId, photoFile, onBack, onTemplateChang
           <div className="flex items-center gap-2">
             <DownloadButtons
               content={editedContent}
-              filename={`${name.replace(/[^a-zA-Z0-9]/g, '_')}_${version.title.replace(/\s+/g, '_')}`}
+              filename={`${name.replace(/[^a-zA-Z0-9]/g, '_')}_${(version.title || '').replace(/\s+/g, '_')}`}
               templateId={templateId}
               compact={true}
             />
@@ -591,7 +591,7 @@ function ResumePreview({ version, templateId, photoFile, onBack, onTemplateChang
             </h3>
             <DownloadButtons
               content={editedContent}
-              filename={`${name.replace(/[^a-zA-Z0-9]/g, '_')}_${version.title.replace(/\s+/g, '_')}`}
+              filename={`${name.replace(/[^a-zA-Z0-9]/g, '_')}_${(version.title || '').replace(/\s+/g, '_')}`}
               templateId={templateId}
             />
           </div>

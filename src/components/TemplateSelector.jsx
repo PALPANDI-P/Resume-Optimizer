@@ -24,7 +24,7 @@ const TemplateSelector = memo(function TemplateSelector({ selectedTemplateId, on
       result = result.filter(t =>
         t.name.toLowerCase().includes(q) ||
         t.archetype.toLowerCase().includes(q) ||
-        (t.categories && t.categories.some(c => c.replace(/-/g, ' ').includes(q)))
+        (t.categories && t.categories.some(c => (c || '').replace(/-/g, ' ').includes(q)))
       );
     }
 

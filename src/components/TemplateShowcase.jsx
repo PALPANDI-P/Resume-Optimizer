@@ -140,7 +140,7 @@ const TemplateShowcase = memo(function TemplateShowcase() {
                 <TemplateThumbnail template={template} isSelected={false} />
                 <div className="mt-3 text-center">
                   <h4 className="text-sm font-bold text-slate-800">{template.name}</h4>
-                  <p className="text-xs text-slate-400 capitalize">{template.archetype.replace(/-/g, ' ')}</p>
+                  <p className="text-xs text-slate-400 capitalize">{(template.archetype || '').replace(/-/g, ' ')}</p>
                 </div>
               </div>
             ))}

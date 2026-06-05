@@ -216,7 +216,7 @@ export default function ResumeOptimizer({
         body: JSON.stringify({
           content,
           format: fmt,
-          filename: title.replace(/[^a-zA-Z0-9]/g, '_'),
+          filename: (title || '').replace(/[^a-zA-Z0-9]/g, '_'),
           template_id: activeTemplateId || 'cc-001'
         })
       });
@@ -651,7 +651,7 @@ export default function ResumeOptimizer({
                             <div className="p-4 flex items-center justify-between bg-slate-50 border-b border-slate-100">
                               <div>
                                 <h4 className="text-xs font-black text-slate-800 capitalize">
-                                  {v.title.replace('-', ' ')} Profile
+                                  {(v.title || '').replace('-', ' ')} Profile
                                 </h4>
                                 <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
                                   ATS optimized configuration
