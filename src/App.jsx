@@ -76,6 +76,16 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentView]);
 
+  // Global error handler for unhandled promise rejections
+  useEffect(() => {
+    const handler = (event) => {
+      event.preventDefault();
+      console.warn('[App] Unhandled promise rejection caught:', event.reason);
+    };
+    window.addEventListener('unhandledrejection', handler);
+    return () => window.removeEventListener('unhandledrejection', handler);
+  }, []);
+
   // Auto-save draft
   useEffect(() => {
     if (builderData) {
@@ -94,7 +104,8 @@ function App() {
       'premium': 'optimization',
       'templates': 'templates',
       'examples': 'examples',
-      'cover-letter': 'coverletter'
+      'cover-letter': 'coverletter',
+      'aiassistant': 'aiassistant'
     };
     if (actionToViewMap[actionId]) {
       setCurrentView(actionToViewMap[actionId]);

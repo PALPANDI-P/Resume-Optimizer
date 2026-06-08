@@ -39,14 +39,21 @@ export default function ExampleLibrary({ onSelectExample, onViewChange }) {
       ...example.data,
       visibleSections: {
         summary: true,
+        objective: true,
         experience: true,
         internships: true,
         education: true,
         skills: true,
+        technicalSkills: true,
+        softSkills: true,
         projects: true,
         certifications: true,
         achievements: true,
+        awards: true,
         languages: true,
+        publications: true,
+        volunteerExperience: true,
+        references: true,
         customSections: true
       }
     };

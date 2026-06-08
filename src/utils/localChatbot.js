@@ -44,7 +44,21 @@ const TYPO_MAP = {
   'necesary': 'necessary',
   'enviornment': 'environment',
   'performence': 'performance',
-  'knowlege': 'knowledge'
+  'knowlege': 'knowledge',
+  'langauge': 'language',
+  'languges': 'languages',
+  'curriculm': 'curriculum',
+  'volenteer': 'volunteer',
+  'volenteering': 'volunteering',
+  'objetive': 'objective',
+  'sumary': 'summary',
+  'accomplishement': 'accomplishment',
+  'acheive': 'achieve',
+  'reccomend': 'recommend',
+  'bussiness': 'business',
+  'managment': 'management',
+  'colaboration': 'collaboration',
+  'comunication': 'communication'
 };
 
 const BILLING_RESPONSES = {
@@ -124,6 +138,18 @@ const RESPONSE_VARIANTS = {
   cover_letter_advice: [
     "A cover letter should feel personal, not generic. Open with a hook — maybe a specific company achievement you admire — then connect your story to their needs. Our Cover Letter tool can generate drafts using your resume as a base. Want to give it a try?",
     "Cover letters work best when they show you've done your homework. Mention something specific about the company, then explain why your background makes you a natural fit. Have you got a particular role in mind?"
+  ],
+  formatting_advice: [
+    "**Resume Length:** 1 page for entry/mid-level (0-10 years), 2 pages for senior/executive (10+ years). Never exceed 2 pages unless you're in academia.\n\n**Font Size:** Use 10-12pt for body text and 14-16pt for your name. Section headings look best at 11-13pt bold.\n\n**Margins:** 0.5 to 1 inch on all sides. Smaller margins give you more space, but don't go below 0.5 inches — printers and ATS systems clip narrow margins.\n\n**Font Choices:** Stick to professional, ATS-safe fonts: **Inter, Calibri, Arial, Roboto, Lato, or Garamond**. Avoid decorative fonts.",
+    "**Formatting Best Practices:**\n- Use consistent date formatting (e.g., Jan 2022 – Present or 01/2022 – Present)\n- Align job titles left and dates right\n- Use 1.0 to 1.15 line spacing for readability\n- Save as PDF to preserve formatting across devices\n- Keep section headings ALL CAPS or Bold for scannability"
+  ],
+  common_questions: [
+    "**How long should my resume be?**\nOne page is ideal for most candidates with under 10 years of experience. Senior professionals and executives can use two pages. Quality over quantity — every line should add value.",
+    "**Should I include a photo?**\nIn the US, UK, and Canada — no. It can trigger unconscious bias and some ATS systems can't parse them. In Europe and parts of Asia, a small professional headshot is common.",
+    "**Do I need an objective statement?**\nObjective statements are outdated for experienced candidates. Use a **Professional Summary** instead — 2-3 sentences highlighting your top achievements and what you bring to the table. Objectives are still useful for entry-level candidates or career changers.",
+    "**How far back should work experience go?**\nTypically 10-15 years. Older roles can be summarized in one line or omitted unless they're directly relevant to your target position.",
+    "**Should I include references?**\nDon't list references on your resume. 'References available upon request' is also unnecessary — recruiters assume this. Use that space for accomplishments instead.",
+    "**How do I handle employment gaps?**\nBe honest but strategic. You can:\n- Use years instead of months (2019 – 2021)\n- List freelance, volunteer, or coursework during the gap\n- Address it briefly in your cover letter\n- Focus on skills gained during the gap period"
   ]
 };
 
@@ -383,9 +409,18 @@ function classifyIntent(message, lowerMessage) {
       name: 'template',
       test: () => /\b(template|format|design|layout|style|theme|template gallery)\b/i.test(lowerMessage),
       priority: 16
+    },
+    {
+      name: 'formatting',
+      test: () => /\b(font|margin|spacing|page|length|long|short|size|format|one page|two page|pdf|word)\b/i.test(lowerMessage) && /\b(resume|cv|should|best|what|how)\b/i.test(lowerMessage),
+      priority: 17
+    },
+    {
+      name: 'common_questions',
+      test: () => /\b(photo|picture|headshot|references|objective|gap|gaps|employment gap|how far back|how old)\b/i.test(lowerMessage),
+      priority: 18
     }
   ];
-
   intents.sort((a, b) => a.priority - b.priority);
   for (const intent of intents) {
     if (intent.test()) return intent.name;
@@ -509,9 +544,6 @@ function buildGradualReveal(intent, _context) {
   }
   if (intent === 'cover_letter') {
     return pickRandom(RESPONSE_VARIANTS.cover_letter_advice);
-  }
-  if (intent === 'career_path') {
-    return pickRandom(RESPONSE_VARIANTS.career_advice);
   }
   if (intent === 'career_path') {
     return pickRandom(RESPONSE_VARIANTS.career_advice);
@@ -650,6 +682,10 @@ export function getLocalChatbotResponse(message, _userData = {}) {
     responseBody = pickRandom(RESPONSE_VARIANTS.resume_quality) + " Browse the Template Gallery — we have over 200 options, and our ATS-friendly picks include Stockholm, Wall Street, and Harvard. Want me to suggest one based on your industry?";
   } else if (intent === 'resume_upload') {
     responseBody = getWorkflowResponse(query);
+  } else if (intent === 'formatting') {
+    responseBody = pickRandom(RESPONSE_VARIANTS.formatting_advice);
+  } else if (intent === 'common_questions') {
+    responseBody = pickRandom(RESPONSE_VARIANTS.common_questions);
   } else {
     responseBody = buildDefaultResponse(query, lowerQuery, userLevel);
   }

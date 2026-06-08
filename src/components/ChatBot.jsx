@@ -6,7 +6,11 @@ const QUICK_CHIPS = [
   "How to pass ATS checks?",
   "Rewrite my professional summary",
   "Prepare me for an interview",
-  "Help with PDF downloads"
+  "How long should my resume be?",
+  "Best resume format for career changers",
+  "What skills am I missing?",
+  "Help with action verbs",
+  "Cover letter tips"
 ];
 
 const formatMessageText = (text, isUser) => {
@@ -81,7 +85,8 @@ const formatMessageText = (text, isUser) => {
       }
       const numMatch = line.trim().match(/^(\d+)\.\s(.*)/);
       if (numMatch) {
-        const [_, num, content] = numMatch;
+        const num = numMatch[1];
+        const content = numMatch[2];
         return (
           <div key={idx} className="flex gap-1.5 mb-0.5 last:mb-0 ml-0.5 leading-relaxed text-slate-700">
             <span className="font-black text-blue-600">{num}.</span>
@@ -198,6 +203,14 @@ const ChatBot = memo(function ChatBot({ resumeText }) {
           </button>
         </div>
 
+        {/* Resume Context Indicator */}
+        {resumeText && (
+          <div className="px-4 py-1.5 bg-blue-700/40 text-[10px] text-blue-100 font-semibold flex items-center gap-1.5 border-t border-blue-400/20">
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+            Resume data loaded — answers are personalized
+          </div>
+        )}
+
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
           {messages.map((msg, i) => (
@@ -249,7 +262,7 @@ const ChatBot = memo(function ChatBot({ resumeText }) {
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Ask me anything about resumes, careers, or job search..."
+              placeholder="Ask about resume formatting, skills, interviews, career tips..."
               className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
               disabled={isTyping}
             />

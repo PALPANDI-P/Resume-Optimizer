@@ -1,0 +1,186 @@
+================================================================================
+                      RESUME OPTIMIZER AI - DETAILED OVERVIEW
+================================================================================
+
+--------------------------------------------------------------------------------
+1. ABOUT OUR PROJECT
+--------------------------------------------------------------------------------
+Resume Optimizer AI is an enterprise-grade, full-stack resume builder, ATS
+optimization portal, and career preparation engine. Designed to help job seekers
+navigate automated screening pipelines, it parses existing PDF/DOCX resumes,
+compares them against specific job listings, identifies skills gaps, injects
+contextual keywords using the STAR (Situation, Task, Action, Result) format,
+and outputs styled, professional resumes.
+
+Key Features & Capabilities:
+- ATS Match Auditing: Assigns letter grades (A-F) for both ATS parsing rules 
+  and human recruiter preferences, scoring the alignment out of 100%.
+- Custom Theme Studio: Real-time stylesheet controls using relative HSL styling 
+  vars (accent colors, margin widths, typography heights, line spacing).
+- Three-tier Resume Generation:
+  * v1 (ATS Keyword Optimized): Focuses on keyword match rate.
+  * v2 (Recruiter Friendly): Focuses on active action verbs and readability.
+  * v3 (Balanced): Blends keyword matching with simple formatting.
+- AI Cover Letter Generator: Instantly drafts tailored, 3-paragraph cover 
+  letters, recruiter cold outreach emails, or LinkedIn messages matching 
+  selected professional tones (Modern, Executive, Corporate, Recruiter).
+- AI Career Chatbot: A persistent assistant named Alex that references 
+  the active resume to answer career questions and suggest bullet points.
+- AI Interview Prep: Generates 5 custom behavioral/technical questions based 
+  on the gaps between the candidate's resume and target job descriptions.
+- Secure 2FA Access: Signups and logins are authenticated with SMS/Email 
+  One-Time Passwords (OTPs) that expire in 60 seconds.
+- Multi-Layout PDF/DOCX Exporter: Generates documents dynamically using custom 
+  layouts (single-column, timeline layout, and sidebars with background colors).
+- Visual Admin Control Panel: A custom administration portal to monitor total 
+  users, saved resumes, ATS analyses run, and file exports.
+
+------------------------------------------------------------------------
+2. DETAILED TECH STACK
+------------------------------------------------------------------------
+
+FRONTEND:
+- React 18: Core component engine using a modular, view-routed SPA model.
+- Vite: Bundling engine.
+- Tailwind CSS: Utility styling.
+- Lucide React: Standardized UI icons.
+- docx (JS library): Client-side DOCX serialization checks.
+- jspdf & pdfjs-dist: Client-side PDF preview engines.
+- mammoth: Client-side DOCX text extraction/rendering.
+
+BACKEND:
+- Flask: Python micro-framework running REST APIs.
+- Flask-CORS: Manages development and production cross-origin headers.
+- Google Generative AI SDK: Connects to the Gemini 1.5 Flash model.
+- python-docx: Backend Word document generator.
+- fpdf2 (FPDF): Custom backend PDF drawing engine.
+- PyPDF (PdfReader): Text extraction from PDF documents.
+- Flask-SQLAlchemy: Database ORM.
+- Flask-Bcrypt: Hashing algorithms for secure user passwords.
+- Flask-JWT-Extended: Stateless JWT session authentication.
+- python-dotenv: Parses local config values from '.env' files.
+
+DATABASE models inside backend/database.py:
+- User: Profile credentials (name, email, phone, bcrypt password hash).
+- OTPVerification: Stores login/registration codes, expiry times, and states.
+- Resume: Stores the structured resume in JSON format.
+- Analysis: Logs match scores, matched keywords, and generated feedback reports.
+- CoverLetter: Persists generated cover letters and cold email drafts.
+- ChatMessage: Stores user/bot chat logs to maintain conversation context.
+- DownloadHistory: Tracks format types (PDF/DOCX) and template ID download logs.
+
+------------------------------------------------------------------------
+3. WORKSPACE VIEWS AND CLIENT COMPONENTS
+------------------------------------------------------------------------
+The React frontend handles views using the 'currentView' state variable:
+
+1. Home View ('home')
+   - HeroSection: Displays entry calls to create a new resume or upload.
+   - ATSAnalysisSection: Demonstrates the matching score dashboard.
+   - TemplateShowcase: Slides through responsive template thumbnails.
+   - SmartToolsSection: Entry grid for optimization tools.
+
+2. Resume Builder ('builder')
+   - A modular form-based editor split into sections: Personal details, 
+     Summary, Experience, Education, Skills, Projects, and Certifications.
+   - Features dynamic field additions (e.g. adding new project fields) and 
+     triggers debounced auto-saves to LocalStorage and the DB.
+
+3. Resume Preview Page ('preview')
+   - Renders a live visual sheet of the resume.
+   - Side panel tools allow custom layout adjustments (templates, accent colors, 
+     fonts, spacing, margin settings).
+
+4. Optimization Tab ('optimization')
+   - The primary interface where users upload an existing resume and paste a 
+     job description. It displays match scores, matched/missing keywords, 
+     strengths, weaknesses, and three optimized output versions side-by-side.
+
+5. Template Gallery ('templates')
+   - Renders a visual grid of 15 preset professional layouts categorised by 
+     industry preferences (ATS Optimized, Tech, Professional, Creative).
+
+6. Cover Letter Workspace ('coverletter')
+   - Custom outreach creation space. Users generate drafts, customize the 
+     writing style, and download the output in PDF or DOCX.
+
+7. Career Chat Assistant ('aiassistant')
+   - Chat client that references the candidate's active resume to critique 
+     bullet points and suggest career advice.
+
+8. Template Importer ('importer')
+   - Allows users to import custom templates using JSON files.
+
+------------------------------------------------------------------------
+4. CORE SYSTEM OPERATION LOGIC
+------------------------------------------------------------------------
+
+A. FILE TEXT EXTRACTION
+- When a user uploads a resume, it is routed to '/api/parse-resume' or 
+  '/api/generate-resumes'. The backend writes the file to a temp path.
+- PDF: extract_text() uses PdfReader to loop over pages and extract characters.
+- DOCX: Uses python-docx to iterate through paragraphs and combine strings.
+- TXT: Safely decodes text using UTF-8 fallbacks.
+
+B. JOB DESCRIPTION (JD) SEMANTIC AUDIT
+- The backend analyzes the job description to find key terms:
+  1. Noise words are filtered using 'GENERIC_TERMS' (e.g., role, team, business).
+  2. Multi-word phrases are matched using regex (e.g. machine learning, CI/CD).
+  3. Single technical terms are matched against tech matrices (e.g. python, sql).
+  4. Each term receives a relevance score:
+     Score = (Category Weight * Phrase Bonus) + Frequency + Length + Rare Boost
+  5. The sorted keywords are capped at 25 terms to prevent keyword stuffing.
+
+C. THE STAR METHOD BULLET REWRITING
+- The optimizer analyzes the resume using three optimization levels (v1, v2, v3).
+- Entity Protection: Regex patterns protect names, emails, dates, and numbers 
+  from being modified.
+- Strong Verbs: Checks the first word of experience bullets against 'ACTION_VERBS'.
+  If passive (e.g., 'helped with', 'responsible for'), it prepends a strong verb 
+  (e.g., Spearheaded, Automated).
+- STAR Phrase Injection: Identifies missing keywords matching the bullet's 
+  context (e.g., development, cloud). It naturally integrates these keywords 
+  into the text (e.g., appending "...utilizing Kubernetes for container deployment").
+
+D. PDF/DOCX DOCUMENT GENERATOR EXPORT
+- The client clicks download, sending content, filename, and template ID 
+  to the backend.
+- DOCX Export: Writes lines, formats bullet margins, and adds colored 
+  underline borders beneath section headers.
+- PDF Export: Uses 'fpdf2' to configure layouts (single-column, sidebars, 
+  timeline models), draw page borders, and render backgrounds.
+- The temp file is sent to the client and deleted from storage after the request.
+
+------------------------------------------------------------------------
+5. LOCAL RUN GUIDE
+------------------------------------------------------------------------
+Prerequisites: Node.js (v20+) and Python (3.8+) installed.
+
+To run the application locally on Windows:
+1. Create a '.env' file in the 'backend' folder:
+   GEMINI_API_KEY=your_actual_api_key_here
+   ADMIN_API_KEY=admin-secret-key-123
+   JWT_SECRET_KEY=super-secret-key-change-this-in-production
+
+2. Use the Windows startup batch scripts in the root directory:
+   - RUN_ALL.bat: Installs dependencies and starts backend & frontend.
+   - START_ALL.bat: Launches both servers with logging.
+   - START_SIMPLE.bat: Runs both servers in a single terminal window.
+
+Web app URL: http://localhost:5173
+Backend API URL: http://127.0.0.1:5000
+Admin panel URL: http://127.0.0.1:5000/admin
+
+------------------------------------------------------------------------
+6. SERVERLESS PRODUCTION DEPLOYMENT
+------------------------------------------------------------------------
+The project is configured for serverless deployment on Vercel:
+
+- Frontend Rewrite: Requests to '/api/:path*' are proxied to 'api/index.py' 
+  using 'vercel.json' rules.
+- CORS Headers: Configured to support requests from whitelisted domains.
+- Serverless Performance: Sets a 30s timeout (maxDuration) and 1024MB memory 
+  allocation to ensure fast document rendering and LLM calls.
+- Database Fallback: If deployed without a 'DATABASE_URL', the backend uses an 
+  ephemeral SQLite database at '/tmp/resume_optimizer.db' to prevent crashes.
+================================================================================

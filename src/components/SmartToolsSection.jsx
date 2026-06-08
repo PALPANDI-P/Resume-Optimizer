@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { 
-  FileText, Sparkles, Shield, BookOpen, Heart,
+  FileText, Sparkles, Shield, BookOpen, Heart, MessageCircle,
   ArrowRight
 } from 'lucide-react';
 
@@ -44,6 +44,14 @@ const TOOLS = [
     title: 'Matching Cover Letter Templates',
     description: 'Generate a personalized cover letter that matches your resume and the specific job you are applying for.',
     actionId: 'cover-letter',
+  },
+  {
+    icon: MessageCircle,
+    iconBg: 'bg-emerald-100',
+    iconColor: 'text-emerald-600',
+    title: 'AI Career Assistant',
+    description: 'Get instant, personalized career advice — from resume rewrites to interview prep, job search strategy, and skill gap analysis.',
+    actionId: 'aiassistant',
   },
 ];
 

@@ -7,6 +7,24 @@ import { serializeResume } from '../utils/resumeSerializer';
 export default function ResumePreviewPage({ data, onBackToEdit, onTemplateChange }) {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
 
+  // Null guard — prevent crash if data is missing
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h2 className="text-xl font-bold">No Resume Data</h2>
+          <p className="text-slate-400 text-sm">Please create or load a resume first.</p>
+          <button
+            onClick={onBackToEdit}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all"
+          >
+            Go to Builder
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Serialize the builder data for the parser in ResumePreview
   const version = {
     content: serializeResume(data),

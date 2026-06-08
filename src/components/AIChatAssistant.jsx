@@ -77,7 +77,8 @@ const formatMessageText = (text, isUser) => {
       }
       const numMatch = line.trim().match(/^(\d+)\.\s(.*)/);
       if (numMatch) {
-        const [_, num, content] = numMatch;
+        const num = numMatch[1];
+        const content = numMatch[2];
         return (
           <div key={idx} className="flex gap-2 mb-1 last:mb-0 ml-1 text-slate-700 leading-relaxed">
             <span className="font-extrabold text-blue-600">{num}.</span>

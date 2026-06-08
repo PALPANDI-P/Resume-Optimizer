@@ -212,10 +212,7 @@ export const serializeResume = (data) => {
       text += `REFERENCES\n`;
       validRef.forEach(ref => {
         text += `${ref.name}${ref.title ? ` | ${ref.title}` : ''}${ref.company ? ` | ${ref.company}` : ''}\n`;
-        const contact = [];
-        if (ref.email) contact.push(ref.email);
-        if (ref.phone) contact.push(ref.phone);
-        if (contact.length > 0) text += `${contact.join(' | ')}\n`;
+        if (ref.contact) text += `${ref.contact}\n`;
         text += `\n`;
       });
     }
