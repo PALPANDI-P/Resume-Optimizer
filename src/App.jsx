@@ -20,12 +20,13 @@ import ExampleLibrary from './components/ExampleLibrary';
 import CoverLetterWorkspace from './components/CoverLetterWorkspace';
 import AIChatAssistant from './components/AIChatAssistant';
 import TemplateImporter from './components/TemplateImporter';
+import TemplateValidator from './components/TemplateValidator';
 
 import { serializeResume } from './utils/resumeSerializer';
 import { TEMPLATES } from './constants/templates';
 
 function App() {
-  const [currentView, setCurrentView] = useState('home'); // home, builder, preview, optimization, templates, examples, coverletter, aiassistant, importer
+  const [currentView, setCurrentView] = useState('home'); // home, builder, preview, optimization, templates, examples, coverletter, aiassistant, importer, validator
   
   // Auth & Modals (Safeguarded with try-catch to prevent corrupt local storage from causing a blank page)
   const [user, setUser] = useState(() => {
@@ -239,20 +240,22 @@ function App() {
             onViewChange={handleViewChange}
           />
         );
-      case 'importer':
-        return (
-          <TemplateImporter 
-            onTemplateRegistered={(newTemplate) => {
-              loadTemplates();
-              setSelectedTemplateId(newTemplate.id);
-              setBuilderData(prev => {
-                const base = prev ? prev : normalizeData(null);
-                return { ...base, template_id: newTemplate.id };
-              });
-              setCurrentView('templates');
-            }}
-          />
-        );
+       case 'importer':
+         return (
+           <TemplateImporter 
+             onTemplateRegistered={(newTemplate) => {
+               loadTemplates();
+               setSelectedTemplateId(newTemplate.id);
+               setBuilderData(prev => {
+                 const base = prev ? prev : normalizeData(null);
+                 return { ...base, template_id: newTemplate.id };
+               });
+               setCurrentView('templates');
+             }}
+           />
+         );
+       case 'validator':
+         return <TemplateValidator />;
       default:
         return null;
     }
@@ -287,7 +290,7 @@ function App() {
         )}
       </main>
 
-      <Footer onViewChange={handleViewChange} />
+      <Footer onViewChange={handleViewChange} onDevClick={() => setCurrentView('validator')} />
       
       <ChatBot resumeText={activeResumeText} />
 

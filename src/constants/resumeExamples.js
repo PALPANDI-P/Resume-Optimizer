@@ -4,6 +4,7 @@
  */
 
 const CATEGORIES = [
+  { id: 'best-2026', label: 'Best 2026 Templates (AI & Tech)' },
   { id: 'college', label: 'College Students' },
   { id: 'freshers', label: 'Freshers' },
   { id: 'entry', label: 'Entry-Level' },
@@ -394,6 +395,24 @@ const DATA_BY_CATEGORY = {
     ],
     projects: [
       { name: 'Executive Sales Dashboard Integration', link: 'summitsolutions.com/sales-bi', description: '- Designed interactive Power BI reporting dashboard connecting Salesforce and internal databases.\n- Enabled executive team to track key metrics (LTV, CAC, MRR) with live hourly updates.' }
+    ]
+  },
+  'best-2026': {
+    titles: ['Senior AI Agent Systems Engineer', 'Generative AI PM', 'LLMOps Platform Architect', 'Cognitive Prompt Architect', 'AI Safety & Governance Lead'],
+    skills: [
+      { category: 'AI & Systems', items: 'Agentic Frameworks, PyTorch, LangChain, LlamaIndex, vLLM, Triton' },
+      { category: 'LLMOps & Infra', items: 'Kubernetes, Docker, Ray, Terraform, AWS SageMaker, Weights & Biases' },
+      { category: 'Cognitive Science', items: 'Few-Shot Prompting, Fine-Tuning, RLHF, DPO, Chain-of-Thought Design' }
+    ],
+    summaries: [
+      "Senior AI Systems Engineer with deep expertise in agentic frameworks, multi-agent coordination, and high-performance inference platforms. Proven record of deploying real-time LLM agents serving millions of users.",
+      "Generative AI Product Manager focusing on cognitive workflows, vector databases, and enterprise prompt engineering. Skilled at bridging foundational model capabilities with client business priorities."
+    ],
+    experiences: [
+      { role: 'Lead AI Engineer', company: 'NeuralForge AI Labs', dates: '2025 - Present', description: '- Engineered multi-agent runtime coordinator supporting 10,000+ concurrent LLM calls with automated tool routing.\n- Deployed custom fine-tuned Llama-3 models using DeepSpeed, reducing model hosting costs by 55%.' }
+    ],
+    projects: [
+      { name: 'OmniAgent Core SDK', link: 'github.com/neuralforge/omniagent', description: '- Built open-source python framework for cognitive chain-of-thought routing.\n- Achieved 4,500+ stars on GitHub and was integrated into 12 enterprise productions.' }
     ]
   }
 };

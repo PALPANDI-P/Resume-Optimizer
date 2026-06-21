@@ -1,11 +1,25 @@
-import React, { useState } from 'react';
-import { ChevronLeft, Layout, X, Palette } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, Layout, X, Palette, FileText } from 'lucide-react';
 import ResumePreview from './ResumePreview';
 import TemplateSelector from './TemplateSelector';
 import { serializeResume } from '../utils/resumeSerializer';
+import { PREMIUM_SAMPLE_DATA } from '../constants/templates';
 
 export default function ResumePreviewPage({ data, onBackToEdit, onTemplateChange }) {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showDemoData, setShowDemoData] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState(() => ({
+    content: serializeResume(data),
+    title: 'Optimized Resume'
+  }));
+
+  useEffect(() => {
+    setCurrentVersion({
+      content: serializeResume(data),
+      title: 'Optimized Resume'
+    });
+    setShowDemoData(false);
+  }, [data]);
 
   // Null guard — prevent crash if data is missing
   if (!data) {
@@ -24,12 +38,6 @@ export default function ResumePreviewPage({ data, onBackToEdit, onTemplateChange
       </div>
     );
   }
-
-  // Serialize the builder data for the parser in ResumePreview
-  const version = {
-    content: serializeResume(data),
-    title: 'Optimized Resume'
-  };
 
   const handleTemplateSelect = (templateId) => {
     onTemplateChange(templateId);
@@ -56,6 +64,19 @@ export default function ResumePreviewPage({ data, onBackToEdit, onTemplateChange
 
         <div className="flex items-center gap-3">
           <button
+            onClick={() => {
+              setCurrentVersion({
+                content: serializeResume(PREMIUM_SAMPLE_DATA),
+                title: 'Demo Resume'
+              });
+              setShowDemoData(true);
+            }}
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/20"
+          >
+            <FileText className="w-4 h-4" />
+            Load Demo Data
+          </button>
+          <button
             onClick={() => setShowTemplateModal(true)}
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-500/20"
           >
@@ -69,7 +90,7 @@ export default function ResumePreviewPage({ data, onBackToEdit, onTemplateChange
       <main className="flex-1 bg-slate-950 p-6 md:p-10 flex flex-col items-center justify-start overflow-y-auto">
         <div className="w-full max-w-7xl">
           <ResumePreview
-            version={version}
+            version={currentVersion}
             templateId={data.template_id || 'cc-001'}
             photoFile={null}
             onBack={onBackToEdit}

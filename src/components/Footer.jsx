@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { FileText, Shield, ExternalLink, Heart } from 'lucide-react';
 
-const Footer = memo(function Footer({ onViewChange }) {
+const Footer = memo(function Footer({ onViewChange, onDevClick }) {
   const year = new Date().getFullYear();
 
   const productLinks = [
@@ -106,6 +106,17 @@ const Footer = memo(function Footer({ onViewChange }) {
             Made with <Heart className="w-3 h-3 text-red-400 fill-red-400" /> for job seekers everywhere
           </p>
         </div>
+        {onDevClick && (
+          <div className="pb-3 text-center">
+            <button
+              onClick={onDevClick}
+              className="text-[9px] text-slate-700 hover:text-purple-400 font-mono tracking-widest uppercase opacity-0 hover:opacity-100 transition-opacity"
+              title="Template Validator (Dev)"
+            >
+              [template_validator]
+            </button>
+          </div>
+        )}
       </div>
     </footer>
   );

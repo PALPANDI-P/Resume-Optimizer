@@ -3,10 +3,13 @@ import {
   User, Mail, Phone, MapPin, Globe, Linkedin, 
   Briefcase, GraduationCap, Code, Award, 
   Plus, Trash2, ChevronRight, ChevronLeft,
-  Eye, FileText, CheckCircle2, PlusCircle, Settings, HelpCircle, Sliders
+  Eye, FileText, CheckCircle2, PlusCircle, Settings, HelpCircle, Sliders,
+  Upload, X, FileCode, Palette
 } from 'lucide-react';
 import TemplateSelector from './TemplateSelector';
-import { normalizeData } from '../utils/resumeSerializer';
+import DownloadButtons from './DownloadButtons';
+import { normalizeData, parseToBuilderData, serializeResume } from '../utils/resumeSerializer';
+import { PREMIUM_SAMPLE_DATA } from '../constants/templates';
 
 const allSteps = [
   { id: 'personal', label: 'Personal Info', icon: User },
@@ -35,10 +38,259 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
   const [data, setData] = useState(() => normalizeData(initialData));
   const [activeStep, setActiveStep] = useState(0);
   const [errors, setErrors] = useState({});
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importFile, setImportFile] = useState(null);
+  const [isParsing, setIsParsing] = useState(false);
+  const [importError, setImportError] = useState('');
+  const [dragActive, setDragActive] = useState(false);
+  const [activeImportTab, setActiveImportTab] = useState('file');
+  const [showDemoDownload, setShowDemoDownload] = useState(false);
+  const [importStep, setImportStep] = useState('upload');
+  const [parsedImportData, setParsedImportData] = useState(null);
+  const [selectedImportTemplate, setSelectedImportTemplate] = useState(null);
   const lastSavedDataRef = React.useRef('');
   const isInitialMount = React.useRef(true);
   const prevInitialDataRef = React.useRef(null);
   const isInternalUpdate = React.useRef(false);
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+  const handleLoadDemoData = () => {
+    const loaded = normalizeData(PREMIUM_SAMPLE_DATA);
+    setData(loaded);
+    setActiveStep(0);
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        setImportError(`File exceeds the 5MB size limit. Selected file is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Please choose a smaller file or paste the text directly.`);
+        setImportFile(null);
+        return;
+      }
+      if (!['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'].includes(file.type) && !['pdf', 'docx', 'txt'].includes(file.name.split('.').pop()?.toLowerCase())) {
+        setImportError('Unsupported file format. Please upload PDF, DOCX, or TXT files only.');
+        setImportFile(null);
+        return;
+      }
+      setImportFile(file);
+      setImportError('');
+      setImportStep('upload');
+    }
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (file.size > MAX_FILE_SIZE) {
+        setImportError(`File exceeds the 5MB size limit. Selected file is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Please choose a smaller file or paste the text directly.`);
+        return;
+      }
+      if (!['pdf', 'docx', 'txt'].includes(ext)) {
+        setImportError('Unsupported file format. Please upload PDF, DOCX, or TXT files only.');
+        return;
+      }
+      setImportFile(file);
+      setImportError('');
+      setImportStep('upload');
+    }
+  };
+
+  const getTechnicalKeywords = (data) => {
+    const techKeywords = ['javascript', 'python', 'java', 'typescript', 'react', 'node', 'angular',
+      'vue', 'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'sql', 'mongodb', 'git', 'devops',
+      'backend', 'frontend', 'fullstack', 'api', 'cloud', 'agile', 'scrum', 'ci/cd', 'linux',
+      'python', 'c++', 'c#', 'go', 'rust', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'django',
+      'flask', 'spring', 'express', 'tensorflow', 'pytorch', 'machine learning', 'data science',
+      'developer', 'engineer', 'programmer', 'software', 'technical', 'database', 'framework'];
+    const text = serializeResume(data).toLowerCase();
+    return techKeywords.filter(kw => text.includes(kw));
+  };
+
+  const getExperienceYears = (data) => {
+    const datesText = (data.experience || []).map(e => e.dates || '').join(' ');
+    const matches = datesText.match(/\d{4}/g) || [];
+    if (matches.length >= 2) {
+      const years = matches.map(Number).sort((a, b) => a - b);
+      return Math.max(0, years[years.length - 1] - years[0]);
+    }
+    return 0;
+  };
+
+  const getGovernmentKeywords = (data) => {
+    const govKeywords = ['federal', 'state', 'government', 'public sector', 'civil service',
+      'military', 'department of', 'agency', 'congress', 'senate', 'white house',
+      'in / contractor', 'clearance', 'security clearance', 'top secret', 'gs-',
+      'public administration', 'policy', 'legislation', 'compliance', 'regulatory'];
+    const text = serializeResume(data).toLowerCase();
+    return govKeywords.filter(kw => text.includes(kw));
+  };
+
+  const getSuggestedTemplateIds = (data) => {
+    const suggestions = [];
+    const techKeywords = getTechnicalKeywords(data);
+    const expYears = getExperienceYears(data);
+    const govKeywords = getGovernmentKeywords(data);
+
+    if (techKeywords.length >= 3) {
+      const itArchetypes = ['modern-sidebar', 'modern-sidebar-right', 'creative-timeline', 'grid-layout'];
+      templatesList?.forEach(t => {
+        if (itArchetypes.includes(t.archetype) && !suggestions.includes(t.id)) suggestions.push(t.id);
+      });
+    }
+
+    if (expYears >= 10 || (data.experience || []).some(e => /senior|lead|manager|director|vp|principal/i.test(e.role || ''))) {
+      const execArchetypes = ['executive-banner', 'elegant-divider', 'corporate-grid'];
+      templatesList?.forEach(t => {
+        if (execArchetypes.includes(t.archetype) && !suggestions.includes(t.id)) suggestions.push(t.id);
+      });
+    }
+
+    if (expYears <= 3 && (data.experience || []).length === 0) {
+      const basicArchetypes = ['ats-optimized', 'classic-clean', 'modern-sidebar'];
+      templatesList?.forEach(t => {
+        if (basicArchetypes.includes(t.archetype) && !suggestions.includes(t.id)) suggestions.push(t.id);
+      });
+    }
+
+    if (govKeywords.length >= 2) {
+      const govArchetypes = ['ats-optimized', 'classic-clean', 'academic-classic'];
+      templatesList?.forEach(t => {
+        if (govArchetypes.includes(t.archetype) && !suggestions.includes(t.id)) suggestions.push(t.id);
+      });
+    }
+
+    if (suggestions.length === 0) {
+      const defaultArchetypes = ['ats-optimized', 'classic-clean', 'modern-banner'];
+      templatesList?.forEach(t => {
+        if (defaultArchetypes.includes(t.archetype) && !suggestions.includes(t.id)) suggestions.push(t.id);
+      });
+    }
+
+    return suggestions.slice(0, 6);
+  };
+
+  const getSuggestionReason = (data) => {
+    const reasons = [];
+    const techKeywords = getTechnicalKeywords(data);
+    const expYears = getExperienceYears(data);
+    const govKeywords = getGovernmentKeywords(data);
+
+    if (techKeywords.length >= 3) reasons.push(`strong technical content (${techKeywords.length} tech keywords detected)`);
+    if (expYears >= 10) reasons.push(`senior-level experience (~${expYears} years)`);
+    if (expYears <= 3 && (data.experience || []).length === 0) reasons.push('entry-level profile');
+    if (govKeywords.length >= 2) reasons.push('government/public sector keywords detected');
+    if (reasons.length === 0) reasons.push('general professional profile');
+
+    return reasons.join(', ');
+  };
+
+  const handleConvertToTemplate = () => {
+    if (!parsedImportData || !selectedImportTemplate) return;
+    const converted = {
+      ...parsedImportData,
+      template_id: selectedImportTemplate.id,
+    };
+    setData(converted);
+    setShowImportModal(false);
+    resetImportState();
+    setActiveStep(0);
+    if (onPreview) {
+      setTimeout(() => onPreview(converted), 100);
+    }
+  };
+
+  const resetImportState = () => {
+    setImportStep('upload');
+    setParsedImportData(null);
+    setSelectedImportTemplate(null);
+    setImportFile(null);
+    setImportText('');
+    setImportError('');
+    setShowImportModal(false);
+  };
+
+  const handleImportAction = async () => {
+    setImportError('');
+
+    if (importText.trim()) {
+      const textSize = new Blob([importText]).size;
+      if (textSize > MAX_FILE_SIZE) {
+        setImportError(`Pasted text exceeds the 5MB size limit (${(textSize / (1024 * 1024)).toFixed(1)}MB). Please paste a shorter resume.`);
+        return;
+      }
+      if (importText.trim().length < 50) {
+        setImportError('Resume text is too short to parse. Please paste at least a few lines of resume content.');
+        return;
+      }
+      setIsParsing(true);
+      setImportStep('parse');
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        const parsed = parseToBuilderData(importText);
+        const normalized = normalizeData(parsed);
+        setParsedImportData(normalized);
+        setSelectedImportTemplate(null);
+        setImportStep('templates');
+      } catch (err) {
+        setImportError('Error parsing resume content: ' + (err?.message || 'Unknown parsing error. Please check your text and try again.'));
+        setImportStep('upload');
+      } finally {
+        setIsParsing(false);
+      }
+    } else if (importFile) {
+      setIsParsing(true);
+      setImportStep('parse');
+      try {
+        const formData = new FormData();
+        formData.append('resume', importFile);
+        const response = await fetch('/api/parse-resume', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          if (response.status === 413) {
+            throw new Error('File too large for the server. Maximum allowed size is 5MB. Please compress your file or paste the text instead.');
+          }
+          if (response.status === 415) {
+            throw new Error('Unsupported file type. The server only accepts PDF, DOCX, and TXT files.');
+          }
+          throw new Error(errData.error || 'Failed to extract text from file.');
+        }
+        const resData = await response.json();
+        if (!resData.text) {
+          throw new Error('No readable text found in this file. The file may be image-based or password-protected. Try pasting the text instead.');
+        }
+        await new Promise(resolve => setTimeout(resolve, 800));
+        const parsed = parseToBuilderData(resData.text);
+        const normalized = normalizeData(parsed);
+        setParsedImportData(normalized);
+        setSelectedImportTemplate(null);
+        setImportStep('templates');
+      } catch (err) {
+        setImportError(err.message || 'Error parsing uploaded file. Please try again or use the text paste option.');
+        setImportStep('upload');
+      } finally {
+        setIsParsing(false);
+      }
+    }
+  };
 
   // Call real-time onChange
   useEffect(() => {
@@ -1193,6 +1445,7 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
               selectedTemplateId={data.template_id}
               onSelect={(templateId) => setData({ ...data, template_id: templateId })}
               templatesList={templatesList}
+              previewData={data}
             />
           </div>
         );
@@ -1217,10 +1470,48 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
         </div>
         
         <div className="flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-2 text-[10px] text-slate-400 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+          <div className="hidden lg:flex items-center gap-2 text-[10px] text-slate-400 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
              Auto-save draft enabled
           </div>
+          <button 
+            type="button"
+            onClick={handleLoadDemoData}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition-all shadow-md"
+            title="Populate builder with demo data for testing"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            Demo Data
+          </button>
+          <div className="relative">
+            <button 
+              type="button"
+              onClick={() => setShowDemoDownload(prev => !prev)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold transition-all shadow-md"
+              title="Download a demo resume with the current template"
+            >
+              Download Demo Resume
+            </button>
+            {showDemoDownload && (
+              <div className="absolute right-0 top-full mt-2 z-50 w-52 bg-white rounded-xl border border-slate-200 shadow-xl p-2" onClick={(e) => e.stopPropagation()}>
+                <DownloadButtons
+                  content={serializeResume(PREMIUM_SAMPLE_DATA)}
+                  filename="demo_resume"
+                  templateId={data.template_id || templatesList?.[0]?.id || 'cc-001'}
+                  compact={true}
+                />
+              </div>
+            )}
+          </div>
+          <button 
+            type="button"
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg border border-slate-700 text-xs font-bold transition-all"
+            title="Import and parse existing resume text"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Import
+          </button>
           <button 
             type="button"
             onClick={() => onPreview && onPreview(data)}
@@ -1313,6 +1604,383 @@ const ResumeBuilder = ({ initialData, onSave, onPreview, onChange, templatesList
           </button>
         )}
       </div>
+
+      {/* Import Resume Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-scale-up text-slate-800">
+            {/* Modal Header */}
+            <div className="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileCode className="w-4.5 h-4.5 text-blue-400" />
+                <span className="font-bold text-sm">Import Existing Resume</span>
+              </div>
+              <button
+                type="button"
+                onClick={resetImportState}
+                className="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors"
+                disabled={isParsing}
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+
+            {/* Step Indicator */}
+            {!isParsing && (
+              <div className="px-5 pt-3 pb-2 bg-slate-50 border-b border-slate-100">
+                <div className="flex items-center justify-between">
+                  {[
+                    { key: 'upload', label: 'Upload', icon: Upload },
+                    { key: 'parse', label: 'Parse', icon: FileText },
+                    { key: 'templates', label: 'Template', icon: Palette },
+                    { key: 'review', label: 'Review', icon: CheckCircle2 },
+                  ].map((step, idx, arr) => {
+                    const stepOrder = ['upload', 'parse', 'templates', 'review'];
+                    const currentIdx = stepOrder.indexOf(importStep);
+                    const isActive = importStep === step.key;
+                    const isDone = currentIdx > idx;
+                    const Icon = step.icon;
+                    return (
+                      <React.Fragment key={step.key}>
+                        <div className="flex flex-col items-center gap-1">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                            isActive ? 'bg-blue-600 text-white shadow-md shadow-blue-200' :
+                              isDone ? 'bg-green-500 text-white' :
+                                'bg-slate-200 text-slate-500'
+                          }`}>
+                            {isDone ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Icon className="w-3.5 h-3.5" />}
+                          </div>
+                          <span className={`text-[9px] font-bold uppercase tracking-wider ${isActive ? 'text-blue-600' : isDone ? 'text-green-600' : 'text-slate-400'}`}>
+                            {step.label}
+                          </span>
+                        </div>
+                        {idx < arr.length - 1 && (
+                          <div className={`flex-1 h-0.5 mx-1 rounded transition-all ${currentIdx > idx ? 'bg-green-400' : 'bg-slate-200'}`} />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Parallax Progress Bar for Parsing */}
+            {isParsing && (
+              <div className="px-5 py-2 bg-slate-50 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-600 rounded-full transition-all duration-500 ease-out"
+                      style={{
+                        width: importStep === 'parse' ? '60%' : '90%',
+                        animation: 'pulse-bar 1.5s ease-in-out infinite',
+                      }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                    {importStep === 'parse' ? 'Parsing...' : 'Finalizing...'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Error Banner */}
+            {importError && (
+              <div className="mx-5 mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-semibold flex items-start gap-2">
+                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0 text-[10px] font-extrabold font-mono">!</div>
+                <div className="space-y-1">
+                  <div className="font-bold">Something went wrong</div>
+                  <div>{importError}</div>
+                  {(importError.includes('size') || importError.includes('file too large')) && (
+                    <div className="text-red-600 mt-1">
+                      Tip: Try <button type="button" onClick={() => { setActiveImportTab('text'); setImportError(''); }} className="underline font-bold hover:text-red-800">pasting your resume text</button> instead, or remove unnecessary sections to reduce file size.
+                    </div>
+                  )}
+                  {(importError.includes('text') || importError.includes('text too short')) && (
+                    <div className="text-red-600 mt-1">Ensure you include at least your name, role, and one work experience entry to enable parsing.</div>
+                  )}
+                  {(importError.includes('server') || importError.includes('network')) && (
+                    <div className="text-red-600 mt-1">The file parsing service may be temporarily unavailable. Please use the text paste option as a fallback.</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-4">
+              {isParsing ? (
+                <div className="py-10 flex flex-col items-center justify-center space-y-4 text-center">
+                  <div className="relative w-16 h-16">
+                    <div className="absolute inset-0 rounded-full border-4 border-slate-100" />
+                    <div className="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-800">
+                      {importStep === 'parse' ? 'Analyzing Resume Content' : 'Almost Done...'}
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-1 max-w-[280px]">
+                      {importStep === 'parse'
+                        ? 'Our pipeline is parsing layout tables, extracting dates, sections, and mapping technical skills...'
+                        : 'Structuring your parsed data and generating template recommendations...'}
+                    </p>
+                  </div>
+                </div>
+              ) : importStep === 'templates' && parsedImportData ? (
+                <>
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-xs text-green-800 leading-relaxed flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                    <div>
+                      <strong>Parse Successful!</strong> We identified {getTechnicalKeywords(parsedImportData).length} technical keywords and {(parsedImportData.experience || []).length} experience entries.
+                      <span className="text-green-600 block mt-0.5 text-[10px]">Profile: {getSuggestionReason(parsedImportData)}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                      Recommended Templates
+                      <span className="text-blue-600 ml-1">— AI-matched to your profile</span>
+                    </label>
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {getSuggestedTemplateIds(parsedImportData).map(tid => {
+                        const tmpl = templatesList?.find(t => t.id === tid) || TEMPLATES.find(t => t.id === tid);
+                        if (!tmpl) return null;
+                        const isSelected = selectedImportTemplate?.id === tid;
+                        return (
+                          <button
+                            key={tid}
+                            type="button"
+                            onClick={() => setSelectedImportTemplate(tmpl)}
+                            className={`relative rounded-xl border-2 transition-all p-1.5 text-left ${
+                              isSelected ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-100' : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'
+                            }`}
+                          >
+                            <div className={`aspect-[3/4] rounded-lg mb-1.5 overflow-hidden`}
+                              style={{
+                                background: `linear-gradient(135deg, ${tmpl.styles?.headerColor || '#1e293b'} 0%, ${tmpl.styles?.accentColor || '#3b82f6'} 100%)`,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                padding: '6px 4px',
+                              }}>
+                              <div className="h-1.5 w-3/4 rounded-sm bg-white/90 mb-1" />
+                              <div className="h-0.5 w-full rounded-sm bg-white/40 mb-0.5" />
+                              <div className="h-0.5 w-5/6 rounded-sm bg-white/30 mb-0.5" />
+                              <div className="flex gap-0.5 mt-0.5">
+                                <div className="flex-1 h-4 rounded-sm bg-white/20" />
+                                <div className="flex-1 h-4 rounded-sm bg-white/15" />
+                              </div>
+                            </div>
+                            <div className="px-1">
+                              <div className="text-[10px] font-bold text-slate-700 truncate">{tmpl.name}</div>
+                              <div className="text-[8px] text-slate-400 uppercase tracking-wider">{tmpl.archetype?.replace('-', ' ')}</div>
+                            </div>
+                            {isSelected && (
+                              <div className="absolute top-1 right-1 w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                                <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                      Or browse all templates
+                    </label>
+                    <div className="grid grid-cols-4 gap-2 max-h-36 overflow-y-auto pr-1">
+                      {(templatesList || TEMPLATES).slice(0, 20).map(tmpl => {
+                        const isSelected = selectedImportTemplate?.id === tmpl.id;
+                        const isRecommended = getSuggestedTemplateIds(parsedImportData).includes(tmpl.id);
+                        return (
+                          <button
+                            key={tmpl.id}
+                            type="button"
+                            onClick={() => setSelectedImportTemplate(tmpl)}
+                            className={`relative rounded-lg border transition-all p-1 text-left ${
+                              isSelected ? 'border-blue-500 bg-blue-50' : isRecommended ? 'border-amber-300 bg-amber-50/50 hover:border-blue-300' : 'border-slate-200 hover:border-blue-300'
+                            }`}
+                            title={tmpl.name}
+                          >
+                            <div className={`aspect-[3/4] rounded-md mb-1 overflow-hidden`}
+                              style={{
+                                background: `linear-gradient(135deg, ${tmpl.styles?.headerColor || '#1e293b'}40, ${tmpl.styles?.accentColor || '#3b82f6'}40)`,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                padding: '3px 2px',
+                                gap: '1px',
+                              }}>
+                              <div className="h-1 w-2/3 rounded-sm" style={{ background: tmpl.styles?.headerColor || '#1e293b' }} />
+                              <div className="h-0.5 w-full rounded-sm bg-slate-300/50" />
+                              <div className="h-0.5 w-4/5 rounded-sm bg-slate-300/40" />
+                              <div className="h-0.5 w-full rounded-sm bg-slate-300/40" />
+                              <div className="flex gap-0.5">
+                                <div className="flex-1 h-2 rounded-sm" style={{ background: tmpl.styles?.accentColor || '#3b82f6' + '40' }} />
+                                <div className="flex-1 h-2 rounded-sm" style={{ background: tmpl.styles?.accentColor || '#3b82f6' + '30' }} />
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <div className="absolute top-0.5 right-0.5 w-3 h-3 bg-blue-600 rounded-full flex items-center justify-center">
+                                <CheckCircle2 className="w-2 h-2 text-white" />
+                              </div>
+                            )}
+                            {isRecommended && !isSelected && (
+                              <div className="absolute top-0.5 right-0.5">
+                                <div className="w-2.5 h-2.5 rounded-full bg-amber-400" title="AI Recommended" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </grid>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-xl text-xs text-blue-700 leading-relaxed">
+                    <strong>Recruiter-Approved Lossless Parsing:</strong> Upload your file or paste your resume text (max 5MB). Our parser extracts structured sections without altering your original text values.
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="flex border-b border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => { setActiveImportTab('file'); setImportError(''); }}
+                      className={`flex-1 py-2 text-xs font-bold border-b-2 text-center transition-all ${
+                        activeImportTab === 'file' ? 'text-blue-600 border-blue-600' : 'text-slate-500 border-transparent'
+                      }`}
+                    >
+                      Upload File (.pdf, .docx, .txt)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setActiveImportTab('text'); setImportError(''); }}
+                      className={`flex-1 py-2 text-xs font-bold border-b-2 text-center transition-all ${
+                        activeImportTab === 'text' ? 'text-blue-600 border-blue-600' : 'text-slate-500 border-transparent'
+                      }`}
+                    >
+                      Paste Text Fallback
+                    </button>
+                  </div>
+
+                  {/* Tab Contents */}
+                  {activeImportTab === 'text' ? (
+                    <div className="space-y-1.5 animate-fade-in">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Resume Text</label>
+                      <textarea
+                        value={importText}
+                        onChange={(e) => setImportText(e.target.value)}
+                        placeholder="Paste your plain text resume here... (max 5MB)"
+                        rows={10}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none leading-relaxed resize-none text-slate-800 font-sans"
+                      />
+                      <div className="text-[10px] text-slate-400 text-right">
+                        {(new Blob([importText]).size / 1024).toFixed(1)} KB / 5 MB
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 animate-fade-in">
+                      {importFile ? (
+                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                              <FileText className="w-5 h-5" />
+                            </div>
+                            <div className="max-w-[240px] truncate">
+                              <div className="text-xs font-bold text-slate-800 truncate">{importFile.name}</div>
+                              <div className="text-[10px] text-slate-400 font-medium">{(importFile.size / 1024).toFixed(1)} KB · {importFile.size > MAX_FILE_SIZE ? '⚠️ exceeds 5MB limit' : '✓ within 5MB limit'}</div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => { setImportFile(null); setImportStep('upload'); }}
+                            className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                          >
+                            <X className="w-4.5 h-4.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          onDragEnter={handleDrag}
+                          onDragOver={handleDrag}
+                          onDragLeave={handleDrag}
+                          onDrop={handleDrop}
+                          className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
+                            dragActive ? 'border-blue-500 bg-blue-50/20' : 'border-slate-350 hover:border-blue-400 hover:bg-slate-50/20'
+                          }`}
+                          onClick={() => document.getElementById('resume-file-input')?.click()}
+                        >
+                          <input
+                            id="resume-file-input"
+                            type="file"
+                            accept=".pdf,.docx,.txt"
+                            onChange={handleFileChange}
+                            className="hidden"
+                          />
+                          <Upload className="w-10 h-10 text-slate-400 mx-auto mb-2" />
+                          <h4 className="text-xs font-bold text-slate-700">Drag and drop your resume file here</h4>
+                          <p className="text-[10px] text-slate-400 mt-1">Supports PDF, DOCX, and TXT (Max size 5MB)</p>
+                          <button
+                            type="button"
+                            className="mt-3.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition-all border border-slate-200"
+                          >
+                            Browse Files
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={resetImportState}
+                className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 rounded-lg text-xs font-bold transition-all"
+                disabled={isParsing}
+              >
+                Cancel
+              </button>
+
+              {importStep === 'templates' && parsedImportData ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => { setParsedImportData(null); setSelectedImportTemplate(null); setImportStep('upload'); setImportFile(null); setImportText(''); }}
+                    className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 rounded-lg text-xs font-bold transition-all"
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConvertToTemplate}
+                    disabled={!selectedImportTemplate}
+                    className="px-4.5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold transition-all disabled:opacity-40 shadow-md shadow-green-200 flex items-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Convert to Template
+                  </button>
+                </>
+              ) : importStep === 'upload' ? (
+                <button
+                  type="button"
+                  onClick={handleImportAction}
+                  disabled={isParsing || (!importFile && !importText.trim())}
+                  className="px-4.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all disabled:opacity-40"
+                >
+                  {isParsing ? 'Parsing...' : 'Start Parsing & Load'}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

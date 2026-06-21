@@ -2,11 +2,15 @@ import React, { useState, useMemo, memo } from 'react';
 import { Palette, Search, LayoutGrid, X } from 'lucide-react';
 import TemplateThumbnail from './TemplateThumbnail';
 import { TEMPLATES, TEMPLATE_CATEGORIES } from '../constants/templates';
+import { PREMIUM_SAMPLE_DATA } from '../constants/templates';
 
 const TemplateSelector = memo(function TemplateSelector({ selectedTemplateId, onSelect, templatesList }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [limit, setLimit] = useState(24);
+
+  // Use provided sample data or fall back to the built-in premium sample data
+  const previewData = PREMIUM_SAMPLE_DATA;
 
   const templates = templatesList || TEMPLATES;
 
@@ -80,12 +84,13 @@ const TemplateSelector = memo(function TemplateSelector({ selectedTemplateId, on
       {/* Template Grid */}
       {visibleTemplates.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
             {visibleTemplates.map(template => (
               <div key={template.id} onClick={() => onSelect(template.id)} className="cursor-pointer">
                 <TemplateThumbnail
                   template={template}
                   isSelected={selectedTemplateId === template.id}
+                  data={previewData}
                 />
               </div>
             ))}

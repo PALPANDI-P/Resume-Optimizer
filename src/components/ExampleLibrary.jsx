@@ -70,8 +70,38 @@ export default function ExampleLibrary({ onSelectExample, onViewChange }) {
           Professional Resume Examples
         </h1>
         <p className="text-slate-500 text-sm max-w-2xl mx-auto">
-          Browse our collection of 210 recruiter-approved resume templates across 15 industries. Select any template to review writing guidelines and load it instantly into your workspace.
+          Browse our collection of recruiter-approved resume templates across industries. Select any template to review writing guidelines and load it instantly into your workspace.
         </p>
+      </div>
+
+      {/* 2026 Best Resume Formats Showcase Banner */}
+      <div className="relative overflow-hidden bg-slate-950 text-white rounded-3xl p-6 sm:p-8 md:p-10 mb-10 shadow-2xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-950 to-blue-950/40 -z-10 pointer-events-none" />
+        <div className="absolute top-0 right-0 -translate-y-12 translate-x-12 w-72 h-72 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+        
+        <div className="space-y-3 max-w-2xl text-center md:text-left">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20 text-[10px] font-extrabold uppercase tracking-wider">
+            <Sparkles className="w-3 h-3" />
+            2026 Tech &amp; AI Standards
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
+            Discover the Best 2026 Resume Formats
+          </h2>
+          <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
+            Stay ahead of agentic systems and automated screening tools with recruiter-approved layout standards. Check out our high-density structures engineered for LLMOps, AI Agent Engineering, and modern Product Management roles.
+          </p>
+        </div>
+        
+        <button
+          onClick={() => {
+            setSelectedCategory('best-2026');
+            setLimit(12);
+          }}
+          className="w-full md:w-auto px-6 py-3.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-extrabold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <span>Explore 2026 Formats</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
       </div>
 
       <div className="grid lg:grid-cols-4 gap-8">

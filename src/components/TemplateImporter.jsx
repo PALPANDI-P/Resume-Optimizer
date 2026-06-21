@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Palette, CheckCircle2, AlertCircle, Copy, Check, 
-  Upload, Layout, Save, FileCode, CheckCircle, Info
+  Upload, Layout, Save, FileCode, CheckCircle, Info, Sparkles
 } from 'lucide-react';
 import TemplateThumbnail from './TemplateThumbnail';
 
@@ -106,6 +106,123 @@ const PRESETS = [
       dividerStyle: 'none',
       spacingScale: 0.9,
       sectionOrder: 'standard'
+    }
+  }
+];
+
+const PREMIUM_IMPORT_TEMPLATES = [
+  {
+    name: 'Stockholm (Resume.io)',
+    platform: 'Resume.io',
+    description: 'Centered header, single-column Inter typography, high visual density.',
+    category: 'professional',
+    styles: {
+      layout: 'single-column',
+      headerType: 'centered',
+      fontFamily: "'Inter', sans-serif",
+      secondaryFont: "'Inter', sans-serif",
+      headerColor: '#1e293b',
+      accentColor: '#0f766e',
+      backgroundColor: '#ffffff',
+      textColor: '#1e293b',
+      sidebarBg: '#f8fafc',
+      dividerStyle: 'thin-line',
+      spacingScale: 0.9,
+    }
+  },
+  {
+    name: 'London (Resume.io)',
+    platform: 'Resume.io',
+    description: 'Bold top banner layout, thick recruiter lines, robust ATS spacing.',
+    category: 'executive',
+    styles: {
+      layout: 'single-column',
+      headerType: 'modern-banner',
+      fontFamily: "'Roboto', sans-serif",
+      secondaryFont: "'Inter', sans-serif",
+      headerColor: '#0f172a',
+      accentColor: '#1d4ed8',
+      backgroundColor: '#ffffff',
+      textColor: '#334155',
+      sidebarBg: '#f1f5f9',
+      dividerStyle: 'thick-line',
+      spacingScale: 1.05,
+    }
+  },
+  {
+    name: 'Sydney (Resume.io)',
+    platform: 'Resume.io',
+    description: 'Asymmetric left sidebar, warm gold accents, high-level corporate readability.',
+    category: 'business',
+    styles: {
+      layout: 'sidebar-left',
+      headerType: 'classic',
+      fontFamily: "'Inter', sans-serif",
+      secondaryFont: "'Inter', sans-serif",
+      headerColor: '#451a03',
+      accentColor: '#d97706',
+      backgroundColor: '#ffffff',
+      textColor: '#1e293b',
+      sidebarBg: '#fef3c7',
+      dividerStyle: 'accent-bar',
+      spacingScale: 1.0,
+    }
+  },
+  {
+    name: 'Dublin (Resume.io)',
+    platform: 'Resume.io',
+    description: 'Modern split-info header, balanced two-column blue block accents.',
+    category: 'it',
+    styles: {
+      layout: 'two-column',
+      headerType: 'modern-split',
+      fontFamily: "'Inter', sans-serif",
+      secondaryFont: "'Inter', sans-serif",
+      headerColor: '#0f172a',
+      accentColor: '#0284c7',
+      backgroundColor: '#ffffff',
+      textColor: '#1e293b',
+      sidebarBg: '#f0f9ff',
+      dividerStyle: 'colored-block',
+      spacingScale: 0.95,
+    }
+  },
+  {
+    name: 'Canva Modern Minimalist',
+    platform: 'Canva',
+    description: 'Forest green theme, right-aligned sidebar layout, ultra-compact design.',
+    category: 'creative',
+    styles: {
+      layout: 'sidebar-right',
+      headerType: 'classic',
+      fontFamily: "'Inter', sans-serif",
+      secondaryFont: "'Inter', sans-serif",
+      headerColor: '#064e3b',
+      accentColor: '#059669',
+      backgroundColor: '#ffffff',
+      textColor: '#1e293b',
+      sidebarBg: '#ecfdf5',
+      dividerStyle: 'accent-bar',
+      spacingScale: 0.85,
+    }
+  },
+  {
+    name: 'Canva Executive Serif',
+    platform: 'Canva',
+    description: 'Traditional Georgia serif layout, deep red details, double divider.',
+    category: 'expert',
+    styles: {
+      layout: 'single-column',
+      headerType: 'centered',
+      fontFamily: "Georgia, serif",
+      secondaryFont: "Georgia, serif",
+      headerColor: '#450a0a',
+      accentColor: '#991b1b',
+      backgroundColor: '#ffffff',
+      textColor: '#171717',
+      sidebarBg: '#fafafa',
+      dividerStyle: 'double-line',
+      spacingScale: 1.15,
     }
   }
 ];
@@ -382,6 +499,54 @@ export default function TemplateImporter({ onTemplateRegistered }) {
                 >
                   <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: preset.styles.accentColor }} />
                   {preset.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Canva & Resume.io Quick-Import Assistant */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm space-y-4">
+            <div>
+              <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-4.5 h-4.5 text-blue-600 animate-pulse" />
+                Canva &amp; Resume.io Template Assistant
+              </h3>
+              <p className="text-[10px] text-slate-400 font-medium mt-1">
+                Instantly map layout hierarchies, fonts, spacing scales, and accents from Canva and Resume.io presets.
+              </p>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 gap-3.5">
+              {PREMIUM_IMPORT_TEMPLATES.map((t, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    applyPreset(t);
+                    setTemplateName(t.name);
+                  }}
+                  className="p-4 bg-slate-50 hover:bg-slate-100/50 border border-slate-200 rounded-2xl text-left transition-all hover:scale-[1.01] hover:border-blue-500 hover:shadow-sm focus:ring-2 focus:ring-blue-500/20 outline-none flex flex-col justify-between h-28 group"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-black text-slate-800 group-hover:text-blue-600 transition-colors">{t.name.split(' ')[0]}</span>
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-wider ${
+                        t.platform === 'Canva' 
+                          ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                          : 'bg-blue-50 text-blue-600 border border-blue-100'
+                      }`}>
+                        {t.platform}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-medium leading-normal line-clamp-2">
+                      {t.description}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/50">
+                    <span className="w-3.5 h-3.5 rounded border border-slate-200" style={{ backgroundColor: t.styles.accentColor }} title="Accent Color" />
+                    <span className="w-3.5 h-3.5 rounded border border-slate-200" style={{ backgroundColor: t.styles.headerColor }} title="Header Color" />
+                    <span className="w-3.5 h-3.5 rounded border border-slate-200" style={{ backgroundColor: t.styles.sidebarBg }} title="Sidebar Color" />
+                    <span className="text-[9px] text-slate-400 font-bold ml-auto capitalize">{t.styles.layout.replace('-', ' ')}</span>
+                  </div>
                 </button>
               ))}
             </div>

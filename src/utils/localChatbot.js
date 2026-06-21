@@ -127,6 +127,10 @@ const RESPONSE_VARIANTS = {
     "ATS systems are looking for keyword matches and clean formatting. Stick to standard headings like WORK EXPERIENCE and EDUCATION, avoid tables and text boxes, and sprinkle in keywords from the job description naturally. Would you like me to check how well your resume would likely score?",
     "Keep your resume ATS-friendly by using standard fonts, simple layouts, and job-specific keywords. Many candidates get filtered out before a human even sees their resume. Want tips tailored to your target role?"
   ],
+  template_advice: [
+    "The best layout depends on your industry and experience level. A sidebar-left template works great for IT and creative roles — it puts your skills front and center. A traditional single-column layout is ideal for corporate, government, or legal positions. Have you thought about which direction fits your target role?",
+    "Layout matters more than most people think. Entry-level candidates thrive with clean single-column layouts that keep focus on achievements. Senior professionals benefit from banner or executive layouts that signal authority. Want advice tailored to your specific background?"
+  ],
   interview_advice: [
     "Interview prep is about telling compelling stories. The STAR method (Situation, Task, Action, Result) gives you a solid framework. Prepare 3-5 stories that showcase different strengths, and practice articulating them in under 2 minutes each. Want me to help you draft a story?",
     "The best interview answers are specific and quantifiable. Instead of 'I improved the system,' say 'I reduced API latency by 45%, cutting page load time from 3s to 1.6s.' Numbers stick. Do you have a project we could turn into a STAR story?"
@@ -406,6 +410,11 @@ function classifyIntent(message, lowerMessage) {
       priority: 15
     },
     {
+      name: 'template_advice',
+      test: () => /\b(ats.friendly|ats.friendly.layout|sidebar.layout|which template|best template|template.advice|layout.advice|template.for|good.layout|modern layout|traditional layout|single.column|two.column|which layout|recommend.template|recommend.layout|template.suggestion|layout.suggest)\b/i.test(lowerMessage) || (/\b(best|which|recommend|suggest)\b/i.test(lowerMessage) && /\b(template|layout|design|format)\b/i.test(lowerMessage)),
+      priority: 15.5
+    },
+    {
       name: 'template',
       test: () => /\b(template|format|design|layout|style|theme|template gallery)\b/i.test(lowerMessage),
       priority: 16
@@ -600,7 +609,113 @@ function buildDefaultResponse(message, lowerMessage, _userLevel) {
   ]);
 }
 
-export function getLocalChatbotResponse(message, _userData = {}) {
+export const TEMPLATE_ARCHETYPE_IDS = {
+  'ats-optimized': 'ats-optimized',
+  'classic-clean': 'classic-clean',
+  'modern-sidebar': 'modern-sidebar',
+  'modern-sidebar-right': 'modern-sidebar-right',
+  'executive-banner': 'executive-banner',
+  'elegant-divider': 'elegant-divider',
+  'academic-classic': 'academic-classic',
+  'modern-banner': 'modern-banner',
+  'corporate-grid': 'corporate-grid',
+  'two-column-balanced': 'two-column-balanced',
+  'two-column-weighted': 'two-column-weighted',
+  'creative-timeline': 'creative-timeline',
+  'timeline': 'timeline',
+  'grid-layout': 'grid-layout',
+  'sidebar-left': 'sidebar-left',
+  'sidebar-right': 'sidebar-right',
+};
+
+const IT_TECH_KEYWORDS = ['javascript', 'python', 'java', 'typescript', 'react', 'node', 'angular', 'vue',
+  'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'sql', 'mongodb', 'git', 'devops',
+  'backend', 'frontend', 'fullstack', 'cloud', 'agile', 'linux', 'c++', 'c#', 'go', 'rust',
+  'django', 'flask', 'api', 'software engineer', 'developer', 'programmer', 'technical lead',
+  'engineering', 'machine learning', 'data science', 'cybersecurity', 'networking'];
+
+const SENIOR_KEYWORDS = ['senior', 'lead', 'manager', 'director', 'vp', 'vice president', 'principal',
+  'architect', 'head of', 'head of engineering', 'staff engineer', 'distinguished',
+  'years of experience', 'sr.', 'sr '];
+
+const ENTRY_KEYWORDS = ['intern', 'junior', 'entry.level', 'student', 'fresher', 'graduate', 'recent',
+  'associate', 'no experience', 'starting out', 'new grad', 'trainee'];
+
+const GOVERNMENT_KEYWORDS = ['federal', 'state government', 'government', 'public sector', 'civil service',
+  'military', 'department of', 'agency', 'congress', 'senate', 'clearance', 'security clearance',
+  'top secret', 'gs-', 'public administration', 'regulatory', 'compliance officer'];
+
+function countMatches(keywords, text) {
+  const lower = text.toLowerCase();
+  return keywords.filter(kw => lower.includes(kw)).length;
+}
+
+export function getTemplateAdvice(data = {}) {
+  const resumeText = data.resume_text || '';
+  const serialized = resumeText || JSON.stringify(data).toLowerCase();
+  const expEntries = data.experience || [];
+
+  const recommendations = [];
+  const reasons = [];
+
+  const techCount = countMatches(IT_TECH_KEYWORDS, serialized);
+  const seniorCount = countMatches(SENIOR_KEYWORDS, serialized);
+  const entryCount = countMatches(ENTRY_KEYWORDS, serialized);
+  const govCount = countMatches(GOVERNMENT_KEYWORDS, serialized);
+
+  if (techCount >= 3) {
+    recommendations.push({ id: 'modern-sidebar', archetype: 'modern-sidebar', reason: 'sidebar-left layout to highlight skills' });
+    recommendations.push({ id: 'grid-layout', archetype: 'grid-layout', reason: 'grid layout for visual impact' });
+    reasons.push('strong technical content detected (' + techCount + ' tech keywords)');
+  }
+
+  if (seniorCount >= 2 || expEntries.length >= 5) {
+    recommendations.push({ id: 'executive-banner', archetype: 'executive-banner', reason: 'executive presence and authority' });
+    recommendations.push({ id: 'corporate-grid', archetype: 'corporate-grid', reason: 'professional corporate look' });
+    reasons.push('senior-level profile (' + expEntries.length + ' roles listed)');
+  }
+
+  if (entryCount >= 2 || (expEntries.length === 0 && !seniorCount)) {
+    recommendations.push({ id: 'ats-optimized', archetype: 'ats-optimized', reason: 'ATS-optimized single-column for clean parsing' });
+    recommendations.push({ id: 'classic-clean', archetype: 'classic-clean', reason: 'clean classic layout for entry-level clarity' });
+    reasons.push('entry-level or career-starting profile');
+  }
+
+  if (govCount >= 2) {
+    recommendations.push({ id: 'ats-optimized', archetype: 'ats-optimized', reason: 'government-standard ATS-compliant layout' });
+    recommendations.push({ id: 'classic-clean', archetype: 'classic-clean', reason: 'federal-formatted conservative design' });
+    reasons.push('government/public sector keywords detected');
+  }
+
+  if (recommendations.length === 0) {
+    recommendations.push({ id: 'ats-optimized', archetype: 'ats-optimized', reason: 'universal ATS-friendly default' });
+    recommendations.push({ id: 'modern-banner', archetype: 'modern-banner', reason: 'modern balanced professional look' });
+    reasons.push('general professional profile');
+  }
+
+  const seen = new Set();
+  const unique = recommendations.filter(r => {
+    if (seen.has(r.id)) return false;
+    seen.add(r.id);
+    return true;
+  });
+
+  let response = '';
+  if (reasons.length > 0) {
+    response += 'Based on your resume profile (' + reasons.join('; ') + '), here are my template recommendations:\n\n';
+  } else {
+    response += 'Here are some general template recommendations:\n\n';
+  }
+
+  unique.forEach((rec, i) => {
+    response += (i + 1) + '. **' + rec.id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + '** — ' + rec.reason + '\n';
+  });
+
+  response += '\nBrowse the Template Gallery to preview these designs and apply them instantly. Would you like me to walk through which specific features make each layout suitable for your role?';
+  return { response: response.trim() };
+}
+
+function getLocalChatbotResponse(message, _userData = {}) {
   const query = (message || '').trim();
   const lowerQuery = query.toLowerCase();
   const resumeText = _userData?.resume_text || '';
@@ -678,6 +793,8 @@ export function getLocalChatbotResponse(message, _userData = {}) {
     responseBody = pickRandom(RESPONSE_VARIANTS.cover_letter_advice);
   } else if (intent === 'career_path') {
     responseBody = pickRandom(RESPONSE_VARIANTS.career_advice);
+  } else if (intent === 'template_advice') {
+    responseBody = getTemplateAdvice(_userData).response;
   } else if (intent === 'template') {
     responseBody = pickRandom(RESPONSE_VARIANTS.resume_quality) + " Browse the Template Gallery — we have over 200 options, and our ATS-friendly picks include Stockholm, Wall Street, and Harvard. Want me to suggest one based on your industry?";
   } else if (intent === 'resume_upload') {

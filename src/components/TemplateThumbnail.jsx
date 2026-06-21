@@ -1,10 +1,47 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { PREMIUM_SAMPLE_DATA } from '../constants/templates';
 
 // ─── ARCHETYPE-AWARE THUMBNAIL RENDERER ─────────────────────────────────────
-// Renders miniature, high-fidelity previews of each template archetype.
-// Uses tiny font sizes (3px–7px range) to simulate a full resume at thumbnail scale.
+// Renders miniature, high-fidelity previews using a CSS transform scale approach:
+// content is rendered at normal-ish sizes inside a container that is
+// scaled-down to fit A4 proportions, avoiding the unreadable <2px text issue.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const normalizeBuilderDataForThumbnail = (data) => {
+  const raw = data || PREMIUM_SAMPLE_DATA;
+  const personalRaw = raw.personal || {};
+  const experience = Array.isArray(raw.experience) ? raw.experience : [];
+  const education = Array.isArray(raw.education) ? raw.education : [];
+  const certifications = Array.isArray(raw.certifications) ? raw.certifications : [];
+  const skills = [
+    ...(Array.isArray(raw.skills) ? raw.skills : []),
+    ...(Array.isArray(raw.technicalSkills) ? raw.technicalSkills : []),
+  ].filter(skill => skill && (skill.category || skill.items));
+  const visibleSections = raw.visibleSections || {};
+  const summary = raw.summary || (experience[0] && experience[0].description ? experience[0].description.replace(/[-•*]\s*/g, ' ').slice(0, 240) : PREMIUM_SAMPLE_DATA.summary);
+
+  return {
+    personal: {
+      name: personalRaw.name || raw.name || PREMIUM_SAMPLE_DATA.personal.name,
+      role: personalRaw.role || experience[0]?.role || 'Professional',
+      email: personalRaw.email || '',
+      phone: personalRaw.phone || '',
+      location: personalRaw.location || '',
+      website: personalRaw.website || '',
+      linkedin: personalRaw.linkedin || '',
+    },
+    summary,
+    experience: experience.length ? experience : PREMIUM_SAMPLE_DATA.experience,
+    education: education.length ? education : PREMIUM_SAMPLE_DATA.education,
+    skills: skills.length ? skills : PREMIUM_SAMPLE_DATA.skills,
+    certifications: certifications.length ? certifications : PREMIUM_SAMPLE_DATA.certifications,
+    projects: Array.isArray(raw.projects) ? raw.projects : [],
+    achievements: Array.isArray(raw.achievements) ? raw.achievements : [],
+    languages: Array.isArray(raw.languages) ? raw.languages : [],
+    visibleSections,
+  };
+};
 
 const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected, data, flat = false }) {
   const { styles } = template;
@@ -14,7 +51,7 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   const sidebarBg = styles.sidebarBg || '#f8fafc';
   const bgColor = styles.backgroundColor || '#ffffff';
 
-  const resumeData = data || PREMIUM_SAMPLE_DATA;
+  const resumeData = useMemo(() => normalizeBuilderDataForThumbnail(data), [data]);
   const personal = resumeData.personal || PREMIUM_SAMPLE_DATA.personal;
   const expList = (resumeData.experience?.length ? resumeData.experience : PREMIUM_SAMPLE_DATA.experience).slice(0, 2);
   const eduList = (resumeData.education?.length ? resumeData.education : PREMIUM_SAMPLE_DATA.education).slice(0, 1);
@@ -22,12 +59,27 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   const certList = (resumeData.certifications?.length ? resumeData.certifications : PREMIUM_SAMPLE_DATA.certifications).slice(0, 1);
   const summary = resumeData.summary || PREMIUM_SAMPLE_DATA.summary;
 
+  const metadataBadges = useMemo(() => {
+    const badges = [];
+    if (summary) badges.push('Summary');
+    if (expList.length) badges.push('Experience');
+    if (skillsList.length) badges.push('Skills');
+    if (eduList.length) badges.push('Education');
+    if (certList.length) badges.push('Certifications');
+    if (resumeData.projects?.length) badges.push('Projects');
+    if (resumeData.languages?.length) badges.push('Languages');
+    return badges.length ? badges : ['ATS', 'Readable'];
+  }, [summary, expList, skillsList, eduList, certList, resumeData.projects, resumeData.languages]);
+
   // ─── SECTION TITLE ──────────────────────────────────────────────────────
   const SectionTitle = ({ title, showDivider = true }) => {
     const divider = styles.dividerStyle;
     return (
       <div className="mb-[2px]">
-        <div className="text-[3.5px] font-extrabold uppercase tracking-[0.08em] mb-[1px]" style={{ color: accent }}>
+        <div
+          className="text-[5px] font-extrabold uppercase tracking-[0.08em] mb-[1px] overflow-hidden text-ellipsis whitespace-nowrap"
+          style={{ color: accent }}
+        >
           {title}
         </div>
         {showDivider && divider !== 'none' && (
@@ -61,22 +113,31 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
     }
   }
 
+  // ─── TRUNCATED TEXT HELPER ──────────────────────────────────────────────
+  const truncStyle = { overflow: 'hidden', textOverflow: 'ellipsis' };
+
   // ─── HEADER VARIANTS ────────────────────────────────────────────────────
   const renderClassicHeader = () => (
     <div className="px-2 pt-2 pb-1.5 border-b" style={{ borderColor: accent + '15' }}>
-      <div className="text-[6px] font-black tracking-wide leading-tight truncate" style={{ color: header }}>
+      <div
+        className="text-[8px] font-black tracking-wide leading-tight overflow-hidden text-ellipsis whitespace-nowrap"
+        style={{ color: header }}
+      >
         {(personal.name || 'Jane Doe').toUpperCase()}
       </div>
-      <div className="text-[3px] font-bold tracking-wider uppercase mt-[1px] truncate" style={{ color: accent + 'cc' }}>
+      <div
+        className="text-[4px] font-bold tracking-wider uppercase mt-[1px] overflow-hidden text-ellipsis whitespace-nowrap"
+        style={{ color: accent + 'cc' }}
+      >
         {(personal.role || 'Senior Professional')}
       </div>
-      <div className="flex gap-1.5 mt-[2px] text-[2.5px] flex-wrap" style={{ color: textColor + '99' }}>
+      <div className="flex gap-1.5 mt-[2px] text-[3px] flex-wrap overflow-hidden" style={{ color: textColor + '99' }}>
         {(() => {
-          const contactParts = [personal.email, personal.phone, personal.location].filter(Boolean);
+          const contactParts = [personal.email, personal.phone, personal.location, personal.website, personal.linkedin].filter(Boolean);
           return contactParts.map((part, i) => (
             <React.Fragment key={i}>
               {i > 0 && <span>•</span>}
-              <span className="truncate">{part}</span>
+              <span className="overflow-hidden text-ellipsis whitespace-nowrap max-w-[120px]">{part}</span>
             </React.Fragment>
           ));
         })()}
@@ -86,19 +147,25 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
 
   const renderCenteredHeader = () => (
     <div className="px-2 pt-2.5 pb-1.5 text-center border-b" style={{ borderColor: accent + '15' }}>
-      <div className="text-[6.5px] font-black tracking-wide leading-tight" style={{ color: header }}>
+      <div
+        className="text-[8px] font-black tracking-wide leading-tight overflow-hidden text-ellipsis whitespace-nowrap"
+        style={{ color: header }}
+      >
         {(personal.name || 'Jane Doe').toUpperCase()}
       </div>
-      <div className="text-[3px] font-bold tracking-wider uppercase mt-[1px]" style={{ color: accent + 'cc' }}>
+      <div
+        className="text-[4px] font-bold tracking-wider uppercase mt-[1px] overflow-hidden text-ellipsis whitespace-nowrap"
+        style={{ color: accent + 'cc' }}
+      >
         {(personal.role || 'Senior Professional')}
       </div>
-      <div className="flex gap-1.5 mt-[2px] text-[2.5px] justify-center flex-wrap" style={{ color: textColor + '99' }}>
+      <div className="flex gap-1.5 mt-[2px] text-[3px] justify-center flex-wrap overflow-hidden" style={{ color: textColor + '99' }}>
         {(() => {
-          const contactParts = [personal.email, personal.phone, personal.location].filter(Boolean);
+          const contactParts = [personal.email, personal.phone, personal.location, personal.website, personal.linkedin].filter(Boolean);
           return contactParts.map((part, i) => (
             <React.Fragment key={i}>
               {i > 0 && <span>•</span>}
-              <span>{part}</span>
+              <span className="overflow-hidden text-ellipsis whitespace-nowrap max-w-[120px]">{part}</span>
             </React.Fragment>
           ));
         })()}
@@ -107,20 +174,26 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   );
 
   const renderModernSplitHeader = () => (
-    <div className="px-2 pt-2 pb-1.5 border-b flex justify-between items-end" style={{ borderColor: accent + '15' }}>
-      <div>
-        <div className="text-[6px] font-black tracking-wide leading-tight truncate" style={{ color: header }}>
+    <div className="px-2 pt-2 pb-1.5 border-b flex justify-between items-start gap-1" style={{ borderColor: accent + '15' }}>
+      <div className="min-w-0 flex-1">
+        <div
+          className="text-[7px] font-black tracking-wide leading-tight overflow-hidden text-ellipsis whitespace-nowrap"
+          style={{ color: header }}
+        >
           {(personal.name || 'Jane Doe').toUpperCase()}
         </div>
-        <div className="text-[3px] font-bold tracking-wider uppercase mt-[1px] truncate" style={{ color: accent + 'cc' }}>
+        <div
+          className="text-[3.5px] font-bold tracking-wider uppercase mt-[1px] overflow-hidden text-ellipsis whitespace-nowrap"
+          style={{ color: accent + 'cc' }}
+        >
           {(personal.role || 'Senior Professional')}
         </div>
       </div>
-      <div className="text-right text-[2.2px] leading-relaxed" style={{ color: textColor + '88' }}>
+      <div className="text-right text-[3px] leading-relaxed shrink-0 overflow-hidden" style={{ color: textColor + '88', maxWidth: '40%' }}>
         {(() => {
-          const contactParts = [personal.email, personal.phone, personal.location].filter(Boolean);
+          const contactParts = [personal.email, personal.phone, personal.location, personal.website, personal.linkedin].filter(Boolean);
           return contactParts.map((part, i) => (
-            <div key={i}>{part}</div>
+            <div key={i} className="overflow-hidden text-ellipsis whitespace-nowrap">{part}</div>
           ));
         })()}
       </div>
@@ -129,19 +202,23 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
 
   const renderBannerHeader = () => (
     <div className="px-2 py-1.5" style={{ backgroundColor: header }}>
-      <div className="text-[6px] font-black text-white tracking-wide leading-tight truncate">
+      <div
+        className="text-[7px] font-black text-white tracking-wide leading-tight overflow-hidden text-ellipsis whitespace-nowrap"
+      >
         {(personal.name || 'Jane Doe').toUpperCase()}
       </div>
-      <div className="text-[3px] font-bold tracking-wider uppercase text-white/70 mt-[1px] truncate">
+      <div
+        className="text-[3.5px] font-bold tracking-wider uppercase text-white/70 mt-[1px] overflow-hidden text-ellipsis whitespace-nowrap"
+      >
         {(personal.role || 'Senior Professional')}
       </div>
-      <div className="flex gap-1.5 mt-[2px] text-[2.2px] text-white/55 flex-wrap">
+      <div className="flex gap-1.5 mt-[2px] text-[3px] text-white/55 flex-wrap overflow-hidden">
         {(() => {
-          const contactParts = [personal.email, personal.phone, personal.location].filter(Boolean);
+          const contactParts = [personal.email, personal.phone, personal.location, personal.website, personal.linkedin].filter(Boolean);
           return contactParts.map((part, i) => (
             <React.Fragment key={i}>
               {i > 0 && <span>•</span>}
-              <span>{part}</span>
+              <span className="overflow-hidden text-ellipsis whitespace-nowrap max-w-[100px]">{part}</span>
             </React.Fragment>
           ));
         })()}
@@ -160,27 +237,30 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
 
   // ─── CONTENT BLOCKS ─────────────────────────────────────────────────────
   const renderSummary = () => (
-    <div className="mb-1.5">
+    <div className="mb-2">
       <SectionTitle title="PROFESSIONAL SUMMARY" />
-      <p className="text-[2.5px] leading-[1.5] line-clamp-3" style={{ color: textColor + 'aa' }}>
+      <p
+        className="text-[3.5px] leading-[1.5] line-clamp-3 overflow-hidden"
+        style={{ color: textColor + 'aa' }}
+      >
         {summary}
       </p>
     </div>
   );
 
   const renderExperience = () => (
-    <div className="mb-1.5">
+    <div className="mb-2">
       <SectionTitle title="EXPERIENCE" />
       <div className="space-y-1">
         {expList.map((exp, i) => (
           <div key={i}>
-            <div className="flex justify-between items-baseline">
-              <div className="text-[3px] font-bold truncate" style={{ color: textColor }}>{exp.role}</div>
-              <div className="text-[2px] shrink-0 ml-1" style={{ color: textColor + '77' }}>{exp.dates}</div>
+            <div className="flex justify-between items-baseline gap-1">
+              <div className="text-[4px] font-bold overflow-hidden text-ellipsis whitespace-nowrap min-w-0" style={{ color: textColor }}>{exp.role}</div>
+              <div className="text-[3px] shrink-0 overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: textColor + '77' }}>{exp.dates}</div>
             </div>
-            <div className="text-[2.5px] font-semibold truncate" style={{ color: accent + 'bb' }}>{exp.company}</div>
-            <p className="text-[2.2px] line-clamp-2 mt-[0.5px]" style={{ color: textColor + '88' }}>
-              {(exp.description || '').replace(/[-•*]\s*/g, '• ').substring(0, 120)}
+            <div className="text-[3.5px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: accent + 'bb' }}>{exp.company}</div>
+            <p className="text-[3px] line-clamp-2 mt-[0.5px] overflow-hidden" style={{ color: textColor + '88' }}>
+              {(exp.description || '').replace(/[-•*]\s*/g, '• ').substring(0, 150)}
             </p>
           </div>
         ))}
@@ -189,24 +269,24 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   );
 
   const renderEducation = () => (
-    <div className="mb-1.5">
+    <div className="mb-2">
       <SectionTitle title="EDUCATION" />
       {eduList.map((edu, i) => (
         <div key={i}>
-          <div className="text-[3px] font-bold truncate" style={{ color: textColor }}>{edu.degree}</div>
-          <div className="text-[2.5px] truncate" style={{ color: textColor + '88' }}>{edu.school}</div>
-          <div className="text-[2px]" style={{ color: textColor + '66' }}>{edu.dates}</div>
+          <div className="text-[4px] font-bold overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: textColor }}>{edu.degree}</div>
+          <div className="text-[3.5px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: textColor + '88' }}>{edu.school}</div>
+          <div className="text-[3px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: textColor + '66' }}>{edu.dates}</div>
         </div>
       ))}
     </div>
   );
 
   const renderSkills = () => (
-    <div className="mb-1.5">
+    <div className="mb-2">
       <SectionTitle title="SKILLS" />
       <div className="space-y-[1px]">
         {skillsList.map((skill, i) => (
-          <div key={i} className="text-[2.5px] truncate" style={{ color: textColor + '99' }}>
+          <div key={i} className="text-[3.5px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: textColor + '99' }}>
             <span className="font-semibold" style={{ color: textColor + 'cc' }}>{skill.category}:</span> {skill.items}
           </div>
         ))}
@@ -218,7 +298,7 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
     <div className="mb-1">
       <SectionTitle title="CERTIFICATIONS" />
       {certList.map((cert, i) => (
-        <div key={i} className="text-[2.5px] truncate" style={{ color: textColor + '99' }}>
+        <div key={i} className="text-[3.5px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: textColor + '99' }}>
           • {cert.name} ({cert.year})
         </div>
       ))}
@@ -226,29 +306,29 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   );
 
   const renderContact = () => (
-    <div className="mb-1.5">
+    <div className="mb-2">
       <SectionTitle title="CONTACT" />
-      <div className="space-y-[1px] text-[2.5px]" style={{ color: textColor + '99' }}>
-        {personal.email && <div className="truncate">{personal.email}</div>}
-        {personal.phone && <div className="truncate">{personal.phone}</div>}
-        {personal.location && <div className="truncate">{personal.location}</div>}
-        {personal.website && <div className="truncate">{personal.website}</div>}
+      <div className="space-y-[1px] text-[3.5px]" style={{ color: textColor + '99' }}>
+        {personal.email && <div className="overflow-hidden text-ellipsis whitespace-nowrap">{personal.email}</div>}
+        {personal.phone && <div className="overflow-hidden text-ellipsis whitespace-nowrap">{personal.phone}</div>}
+        {personal.location && <div className="overflow-hidden text-ellipsis whitespace-nowrap">{personal.location}</div>}
+        {personal.website && <div className="overflow-hidden text-ellipsis whitespace-nowrap">{personal.website}</div>}
       </div>
     </div>
   );
 
   // ─── LAYOUT RENDERERS (by archetype family) ────────────────────────────
 
-  // Single-column layouts (classic-clean, executive-serif/banner, minimal-*, ats-optimized, elegant-divider, bold-header)
+  // Single-column layouts
   const renderSingleColumn = () => (
     <div className="flex-1 flex flex-col" style={{ backgroundColor: bgColor }}>
       {renderHeader()}
-      <div className="px-2 py-1.5 flex-1">
+      <div className="px-2 py-2 flex-1 overflow-hidden">
         {renderSummary()}
         {renderExperience()}
-        <div className="flex gap-2">
-          <div className="flex-1">{renderSkills()}</div>
-          <div className="flex-1">
+        <div className="flex gap-3">
+          <div className="flex-1 overflow-hidden">{renderSkills()}</div>
+          <div className="flex-1 overflow-hidden">
             {renderEducation()}
             {renderCertifications()}
           </div>
@@ -261,14 +341,17 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   const renderSidebarLeft = () => (
     <div className="flex-1 flex flex-col" style={{ backgroundColor: bgColor }}>
       {renderHeader()}
-      <div className="flex flex-1">
-        <div className="w-[34%] p-1.5 flex flex-col gap-1.5" style={{ backgroundColor: sidebarBg, borderRight: `0.5px solid ${accent}15` }}>
+      <div className="flex flex-1 overflow-hidden">
+        <div
+          className="w-[35%] p-2 flex flex-col gap-2 overflow-hidden"
+          style={{ backgroundColor: sidebarBg, borderRight: `0.5px solid ${accent}15` }}
+        >
           {renderContact()}
           {renderSkills()}
           {renderEducation()}
           {renderCertifications()}
         </div>
-        <div className="flex-1 p-1.5">
+        <div className="flex-1 p-2 overflow-hidden">
           {renderSummary()}
           {renderExperience()}
         </div>
@@ -280,12 +363,15 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   const renderSidebarRight = () => (
     <div className="flex-1 flex flex-col" style={{ backgroundColor: bgColor }}>
       {renderHeader()}
-      <div className="flex flex-1">
-        <div className="flex-1 p-1.5">
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 p-2 overflow-hidden">
           {renderSummary()}
           {renderExperience()}
         </div>
-        <div className="w-[34%] p-1.5 flex flex-col gap-1.5" style={{ backgroundColor: sidebarBg, borderLeft: `0.5px solid ${accent}15` }}>
+        <div
+          className="w-[35%] p-2 flex flex-col gap-2 overflow-hidden"
+          style={{ backgroundColor: sidebarBg, borderLeft: `0.5px solid ${accent}15` }}
+        >
           {renderContact()}
           {renderSkills()}
           {renderEducation()}
@@ -299,12 +385,12 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   const renderTwoColumn = () => (
     <div className="flex-1 flex flex-col" style={{ backgroundColor: bgColor }}>
       {renderHeader()}
-      <div className="flex flex-1 px-2 py-1.5 gap-2">
-        <div className="flex-1 border-r pr-1.5" style={{ borderColor: accent + '12' }}>
+      <div className="flex flex-1 px-2 py-2 gap-2 overflow-hidden">
+        <div className="flex-1 border-r pr-2 overflow-hidden" style={{ borderColor: accent + '12' }}>
           {renderSummary()}
           {renderExperience()}
         </div>
-        <div className="flex-1 pl-0.5">
+        <div className="flex-1 pl-1 overflow-hidden">
           {renderSkills()}
           {renderEducation()}
           {renderCertifications()}
@@ -317,30 +403,30 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   const renderGridLayout = () => (
     <div className="flex-1 flex flex-col" style={{ backgroundColor: sidebarBg }}>
       {renderHeader()}
-      <div className="px-1.5 py-1.5 flex-1">
-        <div className="mb-1.5 p-1 rounded-[2px]" style={{ backgroundColor: bgColor, border: `0.3px solid ${accent}15` }}>
+      <div className="px-2 py-2 flex-1 overflow-hidden">
+        <div className="mb-2 p-1.5 rounded-[2px] overflow-hidden" style={{ backgroundColor: bgColor, border: `0.3px solid ${accent}15` }}>
           <SectionTitle title="SUMMARY" />
-          <p className="text-[2.5px] line-clamp-2" style={{ color: textColor + 'aa' }}>{summary}</p>
+          <p className="text-[3.5px] line-clamp-2 overflow-hidden" style={{ color: textColor + 'aa' }}>{summary}</p>
         </div>
-        <div className="flex gap-1">
-          <div className="flex-1 p-1 rounded-[2px]" style={{ backgroundColor: bgColor, border: `0.3px solid ${accent}15` }}>
+        <div className="flex gap-1.5">
+          <div className="flex-1 p-1.5 rounded-[2px] overflow-hidden" style={{ backgroundColor: bgColor, border: `0.3px solid ${accent}15` }}>
             <SectionTitle title="EXPERIENCE" />
             {expList.slice(0, 1).map((exp, i) => (
               <div key={i}>
-                <div className="text-[3px] font-bold truncate" style={{ color: textColor }}>{exp.role}</div>
-                <div className="text-[2.2px] truncate" style={{ color: accent + 'bb' }}>{exp.company} • {exp.dates}</div>
+                <div className="text-[4px] font-bold overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: textColor }}>{exp.role}</div>
+                <div className="text-[3px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: accent + 'bb' }}>{exp.company} • {exp.dates}</div>
               </div>
             ))}
           </div>
-          <div className="flex-1 p-1 rounded-[2px]" style={{ backgroundColor: bgColor, border: `0.3px solid ${accent}15` }}>
+          <div className="flex-1 p-1.5 rounded-[2px] overflow-hidden" style={{ backgroundColor: bgColor, border: `0.3px solid ${accent}15` }}>
             {renderSkills()}
           </div>
         </div>
-        <div className="flex gap-1 mt-1">
-          <div className="flex-1 p-1 rounded-[2px]" style={{ backgroundColor: bgColor, border: `0.3px solid ${accent}15` }}>
+        <div className="flex gap-1.5 mt-1.5">
+          <div className="flex-1 p-1.5 rounded-[2px] overflow-hidden" style={{ backgroundColor: bgColor, border: `0.3px solid ${accent}15` }}>
             {renderEducation()}
           </div>
-          <div className="flex-1 p-1 rounded-[2px]" style={{ backgroundColor: bgColor, border: `0.3px solid ${accent}15` }}>
+          <div className="flex-1 p-1.5 rounded-[2px] overflow-hidden" style={{ backgroundColor: bgColor, border: `0.3px solid ${accent}15` }}>
             {renderCertifications()}
           </div>
         </div>
@@ -352,26 +438,29 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   const renderTimeline = () => (
     <div className="flex-1 flex flex-col" style={{ backgroundColor: bgColor }}>
       {renderHeader()}
-      <div className="px-2 py-1.5 flex-1">
+      <div className="px-2 py-2 flex-1 overflow-hidden">
         {renderSummary()}
-        <div className="mb-1.5">
+        <div className="mb-2">
           <SectionTitle title="EXPERIENCE" />
-          <div className="relative pl-2 border-l" style={{ borderColor: accent + '30' }}>
+          <div className="relative pl-3 border-l" style={{ borderColor: accent + '30' }}>
             {expList.map((exp, i) => (
-              <div key={i} className="mb-1 relative">
-                <div className="absolute -left-[5.5px] top-[1px] w-[3px] h-[3px] rounded-full border" style={{ borderColor: accent, backgroundColor: bgColor, borderWidth: '0.5px' }} />
-                <div className="text-[3px] font-bold truncate" style={{ color: textColor }}>{exp.role}</div>
-                <div className="text-[2.5px] truncate" style={{ color: accent + 'bb' }}>{exp.company} • {exp.dates}</div>
-                <p className="text-[2.2px] line-clamp-1 mt-[0.5px]" style={{ color: textColor + '77' }}>
-                  {(exp.description || '').replace(/[-•*]\s*/g, '').substring(0, 80)}
+              <div key={i} className="mb-1.5 relative">
+                <div
+                  className="absolute -left-[5px] top-[2px] w-[5px] h-[5px] rounded-full border"
+                  style={{ borderColor: accent, backgroundColor: bgColor, borderWidth: '0.5px' }}
+                />
+                <div className="text-[4px] font-bold overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: textColor }}>{exp.role}</div>
+                <div className="text-[3.5px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: accent + 'bb' }}>{exp.company} • {exp.dates}</div>
+                <p className="text-[3px] line-clamp-2 mt-[0.5px] overflow-hidden" style={{ color: textColor + '77' }}>
+                  {(exp.description || '').replace(/[-•*]\s*/g, '• ').substring(0, 120)}
                 </p>
               </div>
             ))}
           </div>
         </div>
-        <div className="flex gap-2">
-          <div className="flex-1">{renderSkills()}</div>
-          <div className="flex-1">{renderEducation()}</div>
+        <div className="flex gap-3">
+          <div className="flex-1 overflow-hidden">{renderSkills()}</div>
+          <div className="flex-1 overflow-hidden">{renderEducation()}</div>
         </div>
       </div>
     </div>
@@ -404,25 +493,41 @@ const TemplateThumbnail = memo(function TemplateThumbnail({ template, isSelected
   const badgeColor = categoryBadgeColors[template.category] || 'bg-slate-600';
 
   return (
-    <div className={`aspect-[1/1.414] w-full rounded-xl overflow-hidden transition-all duration-300 group relative
-      ${isSelected
-        ? 'ring-2 ring-blue-500 ring-offset-2 shadow-xl scale-[1.02]'
-        : 'border border-slate-200 hover:shadow-xl hover:border-slate-300 hover:scale-[1.01]'}
-      bg-white flex flex-col`}
+    <div
+      className={`aspect-[1/1.414] w-full rounded-xl overflow-hidden transition-all duration-300 group relative
+        ${isSelected
+          ? 'ring-2 ring-blue-500 ring-offset-2 shadow-xl scale-[1.02]'
+          : 'border border-slate-200 hover:shadow-xl hover:border-slate-300 hover:scale-[1.01]'}
+        bg-white flex flex-col`}
     >
       <div className="flex-1 flex flex-col w-full relative overflow-hidden">
-        {renderBody()}
+        {/* Scale-down the inner content to simulate a real page at thumbnail size */}
+        <div
+          className="origin-top-left"
+          style={{ transform: 'scale(0.42)', transformOrigin: 'top left', width: '238%', height: '238%' }}
+        >
+          {renderBody()}
+        </div>
+        <div className="absolute top-1 right-1 z-10 flex gap-[2px] opacity-90">
+          <span className="bg-green-600/90 text-white text-[5px] font-extrabold px-1.5 py-[1px] rounded-full tracking-wider">ATS</span>
+          {metadataBadges.slice(0, 2).map((badge, idx) => (
+            <span key={idx} className="bg-white/90 text-slate-700 text-[5px] font-bold px-1.5 py-[1px] rounded-full shadow-sm">{badge}</span>
+          ))}
+        </div>
       </div>
 
       {/* Hover overlay */}
       {!flat && (
-         <div className={`absolute inset-0 bg-gradient-to-t from-slate-900/95 via-slate-900/50 to-transparent
-          flex flex-col items-center justify-end p-2 pb-3.5 transition-all duration-300 pointer-events-none
-          ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+         <div
+           className={`absolute inset-0 bg-gradient-to-t from-slate-900/95 via-slate-900/50 to-transparent
+           flex flex-col items-center justify-end p-2 pb-3.5 transition-all duration-300 pointer-events-none
+           ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+         >
           <span className="text-white font-bold text-[11px] text-center leading-tight mb-1 drop-shadow-md">{template.name}</span>
           <span className={`${badgeColor} text-white text-[8px] font-bold px-2 py-[2px] rounded-full uppercase tracking-wider shadow-sm`}>
             {(template.category || '').replace(/-/g, ' ')}
           </span>
+          <span className="bg-white/15 text-white text-[8px] font-bold px-2 py-[2px] rounded-full tracking-wider">Readable</span>
           {isSelected && <CheckCircle2 className="w-4 h-4 text-white mt-1.5 drop-shadow-md" />}
         </div>
       )}
